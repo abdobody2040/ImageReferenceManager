@@ -60,6 +60,13 @@ def dashboard():
     offline_events = Event.query.filter_by(is_online=False).count()
     total_events = Event.query.count()
     
+    # Get pending events count for admin
+    pending_events_count = 0
+    pending_events_list = []
+    if current_user.is_admin():
+        pending_events_count = Event.query.filter_by(status='pending').count()
+        pending_events_list = Event.query.filter_by(status='pending').order_by(Event.created_at.desc()).limit(5).all()
+    
     # Get categories for chart
     categories = EventCategory.query.all()
     category_data = []
@@ -72,7 +79,19 @@ def dashboard():
             })
     
     # Get upcoming events
-    upcoming_events_list = Event.query.filter(Event.start_datetime > datetime.utcnow()).order_by(Event.start_datetime).limit(5).all()
+    upcoming_events_list = Event.query.filter(Event.start_datetime > datetime.utcnow())
+    
+    # Filter by status depending on user role
+    if not current_user.is_admin():
+        # Regular users only see approved events or their own
+        upcoming_events_list = upcoming_events_list.filter(
+            db.or_(
+                Event.status == 'approved',
+                Event.user_id == current_user.id
+            )
+        )
+    
+    upcoming_events_list = upcoming_events_list.order_by(Event.start_datetime).limit(5).all()
     
     # Get recent events
     recent_events = Event.query.order_by(Event.created_at.desc()).limit(5).all()
@@ -82,6 +101,8 @@ def dashboard():
                           online_events=online_events,
                           offline_events=offline_events,
                           total_events=total_events,
+                          pending_events_count=pending_events_count,
+                          pending_events_list=pending_events_list,
                           category_data=category_data,
                           upcoming_events_list=upcoming_events_list,
                           recent_events=recent_events)
