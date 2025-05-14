@@ -30,6 +30,11 @@ switch ($request) {
         requireAdmin();
         require 'routes/settings.php';
         break;
+    case $base_path . 'users':
+        requireAuth();
+        requireAdmin();
+        require 'routes/users.php';
+        break;
     default:
         http_response_code(404);
         require 'views/404.php';
