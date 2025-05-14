@@ -670,7 +670,90 @@ def events_by_requester():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# Initialize database with seed data
+# Route to update database schema (for when we add new columns)
+@app.route('/migrate-db', methods=['GET'])
+def migrate_db():
+    from app import db
+    
+    # Drop and recreate all tables
+    db.drop_all()
+    db.create_all()
+    
+    # Create admin user
+    admin = User(email='admin@pharmaevents.com', role='admin')
+    admin.set_password('admin123')
+    
+    # Create event manager user
+    event_manager = User(email='manager@pharmaevents.com', role='event_manager')
+    event_manager.set_password('manager123')
+    
+    # Create medical rep user
+    medical_rep = User(email='rep@pharmaevents.com', role='medical_rep')
+    medical_rep.set_password('rep123')
+    
+    # Add users to session
+    db.session.add(admin)
+    db.session.add(event_manager)
+    db.session.add(medical_rep)
+    
+    # Create event categories
+    categories = [
+        'Cardiology', 'Oncology', 'Neurology', 'Pediatrics', 
+        'Endocrinology', 'Dermatology', 'Psychiatry', 'Product Launch',
+        'Medical Education', 'Patient Awareness', 'Internal Training'
+    ]
+    
+    for cat_name in categories:
+        category = EventCategory(name=cat_name)
+        db.session.add(category)
+    
+    # Create event types
+    event_types = [
+        'Conference', 'Webinar', 'Workshop', 'Symposium', 
+        'Roundtable Meeting', 'Investigator Meeting'
+    ]
+    
+    for type_name in event_types:
+        event_type = EventType(name=type_name)
+        db.session.add(event_type)
+    
+    # Create venues
+    venues = [
+        {'name': 'Nile Conference Hall', 'governorate': 'Cairo'},
+        {'name': 'Alexandria Medical Center', 'governorate': 'Alexandria'},
+        {'name': 'Luxor International Conference Center', 'governorate': 'Luxor'},
+        {'name': 'Children\'s Hospital Auditorium', 'governorate': 'Alexandria'},
+        {'name': 'Mansoura University Hospital', 'governorate': 'Dakahlia'}
+    ]
+    
+    for venue_data in venues:
+        venue = Venue(name=venue_data['name'], governorate=venue_data['governorate'])
+        db.session.add(venue)
+    
+    # Create service requests
+    service_requests = ['Clinical Trial Support', 'Product Education', 'Physician Training']
+    for sr_name in service_requests:
+        sr = ServiceRequest(name=sr_name)
+        db.session.add(sr)
+    
+    # Create employee codes
+    employee_codes = [
+        {'code': 'EMP001', 'name': 'John Doe'},
+        {'code': 'EMP002', 'name': 'Jane Smith'},
+        {'code': 'EMP003', 'name': 'Ahmed Hassan'}
+    ]
+    
+    for ec_data in employee_codes:
+        ec = EmployeeCode(code=ec_data['code'], name=ec_data['name'])
+        db.session.add(ec)
+    
+    # Commit changes
+    db.session.commit()
+    
+    flash('Database schema has been updated successfully!', 'success')
+    return redirect(url_for('dashboard'))
+
+# Initialize database with seed data    
 @app.route('/init-db', methods=['GET'])
 def init_db():
     # Check if database already has data
