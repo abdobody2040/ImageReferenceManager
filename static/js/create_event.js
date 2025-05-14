@@ -1,3 +1,4 @@
+
 // Create Event JavaScript for PharmaEvents
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -55,21 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (onlineCheckbox.checked) {
             venueFields.classList.add('d-none');
         }
-    }
-    
-    // Form validation and submission
-    const form = document.getElementById('event_form');
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            if (!validateEventForm()) {
-                event.preventDefault();
-                return;
-            }
-            
-            const submitButton = form.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Please wait...';
-        });
     }
 });
 
@@ -199,6 +185,5 @@ function addErrorMessage(field, message) {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'invalid-feedback error-message';
     errorDiv.textContent = message;
-    
     field.parentNode.appendChild(errorDiv);
 }
