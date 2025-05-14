@@ -711,7 +711,15 @@ def delete_user(user_id):
     
     user = User.query.get_or_404(user_id)
     
-    # Delete user
+    # Check if user has events
+    events = Event.query.filter_by(user_id=user_id).all()
+    if events:
+        # Either reassign events to current admin or handle differently
+        for event in events:
+            event.user_id = current_user.id
+        db.session.commit()
+    
+    # Now delete the user
     db.session.delete(user)
     db.session.commit()
     
