@@ -6,10 +6,10 @@ packages = ["openssl", "postgresql"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+run = ["sh", "-c", "php -S 0.0.0.0:5000 index.php"]
 
 [workflows]
-runButton = "Start PHP Server"
+runButton = "PHP Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -37,6 +37,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "php -S 0.0.0.0:5000"
+
+[[workflows.workflow]]
+name = "PHP Server"
+author = 41935773
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "php -S 0.0.0.0:5000 index.php"
 
 [[ports]]
 localPort = 5000
