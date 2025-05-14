@@ -13,9 +13,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle theme toggle
     const themeToggles = document.querySelectorAll('input[name="theme"]');
+    // Set initial theme based on current setting
     themeToggles.forEach(toggle => {
+        if (document.documentElement.getAttribute('data-bs-theme') === toggle.value) {
+            toggle.checked = true;
+        }
+        
         toggle.addEventListener('change', function() {
-            updateSettings({ theme: this.value });
+            const theme = this.value;
+            // Update the HTML element theme attribute
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            // Save the setting to server
+            updateSettings({ theme: theme });
         });
     });
 
@@ -220,9 +229,20 @@ function addUser() {
         const row = document.createElement('tr');
         row.setAttribute('data-id', data.id);
         
+        // Determine badge color based on role
+        let badgeClass = 'bg-secondary';
+        let roleDisplay = data.role.toUpperCase();
+        
+        if (data.role === 'admin') {
+            badgeClass = 'bg-primary';
+        } else if (data.role === 'medical_rep') {
+            badgeClass = 'bg-info';
+            roleDisplay = 'MEDICAL REP';
+        }
+        
         row.innerHTML = `
             <td>${data.email}</td>
-            <td><span class="badge bg-primary">${data.role.toUpperCase()}</span></td>
+            <td><span class="badge ${badgeClass}">${roleDisplay}</span></td>
             <td class="text-end">
                 <button class="btn btn-sm btn-danger btn-delete-user" data-id="${data.id}">
                     <i class="fas fa-trash-alt"></i>

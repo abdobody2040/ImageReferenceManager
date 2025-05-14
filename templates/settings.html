@@ -54,15 +54,17 @@
                     <h5>Color Theme</h5>
                     <div class="mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="theme" id="theme_light" value="light" checked>
+                            <input class="form-check-input" type="radio" name="theme" id="theme_light" value="light" {% if theme == 'light' %}checked{% endif %}>
                             <label class="form-check-label" for="theme_light">
-                                Light Mode
+                                <i class="fas fa-sun me-1"></i> Light Mode
+                                {% if theme == 'light' %}<span class="badge bg-success ms-2">Active</span>{% endif %}
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="theme" id="theme_dark" value="dark">
+                            <input class="form-check-input" type="radio" name="theme" id="theme_dark" value="dark" {% if theme == 'dark' %}checked{% endif %}>
                             <label class="form-check-label" for="theme_dark">
-                                Dark Mode
+                                <i class="fas fa-moon me-1"></i> Dark Mode
+                                {% if theme == 'dark' %}<span class="badge bg-success ms-2">Active</span>{% endif %}
                             </label>
                         </div>
                     </div>
@@ -86,7 +88,7 @@
                     <div class="mb-3">
                         <label for="app_name" class="form-label">Application Name</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="app_name" value="PharmaEvents" placeholder="Application Name">
+                            <input type="text" class="form-control" id="app_name" value="{{ app_name }}" placeholder="Application Name">
                             <button class="btn btn-primary" type="button" id="update_name">Update Name</button>
                         </div>
                     </div>
@@ -257,8 +259,8 @@
                                     <tr data-id="{{ user.id }}">
                                         <td>{{ user.email }}</td>
                                         <td>
-                                            <span class="badge bg-{% if user.role == 'admin' %}primary{% else %}secondary{% endif %}">
-                                                {{ user.role|upper }}
+                                            <span class="badge bg-{% if user.role == 'admin' %}primary{% elif user.role == 'medical_rep' %}info{% else %}secondary{% endif %}">
+                                                {% if user.role == 'medical_rep' %}MEDICAL REP{% else %}{{ user.role|upper }}{% endif %}
                                             </span>
                                         </td>
                                         <td class="text-end">
@@ -298,6 +300,7 @@
                             <label for="user_role" class="form-label">Role</label>
                             <select class="form-select" id="user_role" required>
                                 <option value="event_manager">Event Manager</option>
+                                <option value="medical_rep">Medical Representative</option>
                                 <option value="admin">Administrator</option>
                             </select>
                         </div>

@@ -820,6 +820,17 @@ def migrate_db():
     flash('Database schema has been updated successfully!', 'success')
     return redirect(url_for('dashboard'))
 
+# Make app settings available to all templates
+@app.context_processor
+def inject_settings():
+    app_name = AppSetting.query.filter_by(key='app_name').first()
+    theme = AppSetting.query.filter_by(key='theme').first()
+    
+    return {
+        'app_name': app_name.value if app_name else 'PharmaEvents',
+        'theme': theme.value if theme else 'light'
+    }
+
 # Initialize database with seed data    
 @app.route('/init-db', methods=['GET'])
 def init_db():
