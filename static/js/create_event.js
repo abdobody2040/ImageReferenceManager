@@ -57,13 +57,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Form validation
+    // Form validation and submission
     const form = document.getElementById('event_form');
     if (form) {
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
             if (!validateEventForm()) {
-                event.preventDefault();
-                event.stopPropagation();
+                return;
+            }
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
+            try {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Please wait...';
+                
+                await form.submit();
+            } catch (error) {
+                console.error('Form submission error:', error);
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                alert('An error occurred while submitting the form. Please try again.');
             }
         });
     }
