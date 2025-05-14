@@ -1,5 +1,28 @@
 // Settings page JavaScript
 
+function updateSettings(data) {
+    fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Settings updated successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert('Error updating settings', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating settings:', error);
+        showAlert('Error updating settings', 'danger');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Handle application name update
     const nameInput = document.getElementById('app_name');
