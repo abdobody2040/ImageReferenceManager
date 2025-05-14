@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash, jsonify, send_from_directory
@@ -216,12 +217,25 @@ def create_event():
             flash('Please fill all required fields', 'danger')
             return redirect(url_for('create_event'))
             
-        if len(requester_name) < 4:
+        if not requester_name or len(requester_name) < 4:
             flash('Requester name must be at least 4 characters long', 'danger')
             return redirect(url_for('create_event'))
         
         # Parse dates and times
         try:
+            # Validate date/time format
+            if not all([
+                re.match(r'^\d{4}-\d{2}-\d{2}$', start_date),
+                re.match(r'^\d{2}:\d{2}$', start_time),
+                re.match(r'^\d{4}-\d{2}-\d{2}$', end_date),
+                re.match(r'^\d{2}:\d{2}$', end_time),
+                re.match(r'^\d{4}-\d{2}-\d{2}$', deadline_date),
+                re.match(r'^\d{2}:\d{2}$', deadline_time)
+            ]):
+                flash('Invalid date or time format. Please use the date/time selectors.', 'danger')
+                return redirect(url_for('create_event'))
+                
+            # Parse the datetime objects
             start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
             end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
             registration_deadline = datetime.strptime(f"{deadline_date} {deadline_time}", "%Y-%m-%d %H:%M")
@@ -231,8 +245,8 @@ def create_event():
                 flash('End date must be after or equal to start date', 'danger')
                 return redirect(url_for('create_event'))
                 
-            if registration_deadline >= start_datetime:
-                flash('Registration deadline must be before the event start date', 'danger')
+            if registration_deadline > start_datetime:
+                flash('Registration deadline must be on or before the event start date', 'danger')
                 return redirect(url_for('create_event'))
                 
         except ValueError as e:

@@ -1,19 +1,7 @@
 // Create Event JavaScript for PharmaEvents
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date and time pickers
-    flatpickr('.date-picker', {
-        dateFormat: 'Y-m-d',
-        allowInput: true
-    });
-
-    flatpickr('.time-picker', {
-        enableTime: true,
-        noCalendar: true,
-        dateFormat: 'h:i K',
-        time_24hr: false,
-        allowInput: true
-    });
+    // We'll use native date/time inputs instead of flatpickr to avoid validation issues
 
     // Initialize select2 for multi-select
     if (typeof $.fn.select2 !== 'undefined') {
