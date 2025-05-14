@@ -66,9 +66,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            const submitButton = form.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Please wait...';
+            // Let the form submit naturally
+            return true;
         });
     }
 });
