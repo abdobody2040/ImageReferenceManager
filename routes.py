@@ -739,17 +739,33 @@ def dashboard_statistics():
 def dashboard_categories():
     # Get category data for chart
     categories = EventCategory.query.all()
-    data = []
     
+    # Format for Chart.js
+    labels = []
+    values = []
+    
+    # If there are no categories, provide empty data structure
+    if not categories:
+        return jsonify({
+            "labels": [],
+            "values": []
+        })
+    
+    # Build data arrays
     for category in categories:
-        count = Event.query.filter(Event.categories.contains(category)).count()
-        if count > 0:
-            data.append({
-                "name": category.name,
-                "count": count
-            })
+        try:
+            count = Event.query.filter(Event.categories.contains(category)).count()
+            if count > 0:
+                labels.append(category.name)
+                values.append(count)
+        except Exception as e:
+            app.logger.error(f"Error getting count for category {category.name}: {str(e)}")
     
-    return jsonify(data)
+    # Return in the format expected by Chart.js
+    return jsonify({
+        "labels": labels,
+        "values": values
+    })
 
 @app.route('/api/dashboard/monthly-events')
 @login_required
@@ -789,26 +805,39 @@ def monthly_events():
     
     return jsonify({
         "labels": months,
-        "data": counts
+        "values": counts
     })
 
-@app.route('/api/dashboard/events-by-requester')
+@app.route('/api/dashboard/requesters')
 @login_required
 def events_by_requester():
-    # Get top requesters
-    requesters = db.session.query(
-        Event.requester_name, 
-        db.func.count(Event.id).label('count')
-    ).group_by(Event.requester_name).order_by(db.desc('count')).limit(5).all()
-    
-    data = []
-    for requester in requesters:
-        data.append({
-            "name": requester.requester_name,
-            "count": requester.count
+    try:
+        # Get top requesters
+        requesters = db.session.query(
+            Event.requester_name, 
+            db.func.count(Event.id).label('count')
+        ).group_by(Event.requester_name).order_by(db.desc('count')).limit(5).all()
+        
+        # Format for Chart.js
+        labels = []
+        values = []
+        
+        for requester in requesters:
+            if requester.requester_name:  # Avoid empty names
+                labels.append(requester.requester_name)
+                values.append(requester.count)
+        
+        # Return in the format expected by Chart.js
+        return jsonify({
+            "labels": labels,
+            "values": values
         })
-    
-    return jsonify(data)
+    except Exception as e:
+        app.logger.error(f"Error getting requester data: {str(e)}")
+        return jsonify({
+            "labels": [],
+            "values": []
+        })
 
 # Uploads handler
 @app.route('/uploads/<filename>')
