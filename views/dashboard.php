@@ -3,7 +3,10 @@ $pageTitle = 'Dashboard - ' . getSetting('app_name', 'PharmaEvents');
 $app_name = getSetting('app_name', 'PharmaEvents');
 
 // Additional JavaScript for dashboard charts
-$pageScripts = '<script src="/static/js/dashboard.js"></script>';
+$pageScripts = '
+<script src="/static/js/loading-spinner.js"></script>
+<script src="/static/js/dashboard.js"></script>
+';
 
 ob_start();
 ?>
