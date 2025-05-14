@@ -25,9 +25,18 @@ $routes = [
     '/events/create' => 'routes/events/create.php',
     '/events/export' => 'routes/events/export.php',
     '/profile' => 'routes/profile.php',
+    '/profile/change-password' => 'routes/profile/change_password.php',
     
     // Admin routes
     '/settings' => 'routes/admin/settings.php',
+    '/settings/update' => 'routes/admin/update_settings.php',
+    '/settings/update-logo' => 'routes/admin/update_logo.php',
+    '/settings/event-types/add' => 'routes/admin/add_event_type.php',
+    '/settings/event-types/delete' => 'routes/admin/delete_event_type.php',
+    '/settings/categories/add' => 'routes/admin/add_category.php',
+    '/settings/categories/delete' => 'routes/admin/delete_category.php',
+    '/settings/users/add' => 'routes/admin/add_user.php',
+    '/settings/users/delete' => 'routes/admin/delete_user.php',
     
     // API routes
     '/api/dashboard/statistics' => 'routes/api/dashboard_statistics.php',
@@ -92,10 +101,19 @@ if (isset($routes[$request_uri])) {
         '/events/create',
         '/events/export',
         '/profile',
+        '/profile/change-password',
     ];
     
     $admin_required = [
-        '/settings'
+        '/settings',
+        '/settings/update',
+        '/settings/update-logo',
+        '/settings/event-types/add',
+        '/settings/event-types/delete',
+        '/settings/categories/add',
+        '/settings/categories/delete',
+        '/settings/users/add',
+        '/settings/users/delete',
     ];
     
     // Check authentication requirements
