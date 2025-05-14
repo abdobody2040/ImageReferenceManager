@@ -212,8 +212,12 @@ def create_event():
         
         # Validate required fields
         if not all([name, requester_name, start_date, start_time, end_date, end_time, 
-                   deadline_date, deadline_time, event_type_id, category_ids]):
+                   deadline_date, deadline_time, event_type_id, category_ids, description]):
             flash('Please fill all required fields', 'danger')
+            return redirect(url_for('create_event'))
+            
+        if len(requester_name) < 4:
+            flash('Requester name must be at least 4 characters long', 'danger')
             return redirect(url_for('create_event'))
         
         # Parse dates and times
