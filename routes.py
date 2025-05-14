@@ -21,6 +21,10 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     
+    # Get app name for login template
+    app_name_setting = AppSetting.query.filter_by(key='app_name').first()
+    app_name = app_name_setting.value if app_name_setting else 'PharmaEvents'
+    
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -29,13 +33,13 @@ def login():
         
         if not user or not user.check_password(password):
             flash('Invalid email or password', 'danger')
-            return render_template('login.html')
+            return render_template('login.html', app_name=app_name)
         
         login_user(user)
         flash('Logged in successfully!', 'success')
         return redirect(url_for('dashboard'))
     
-    return render_template('login.html')
+    return render_template('login.html', app_name=app_name)
 
 @app.route('/logout')
 @login_required
@@ -46,6 +50,10 @@ def logout():
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    # Get app name for login template
+    app_name_setting = AppSetting.query.filter_by(key='app_name').first()
+    app_name = app_name_setting.value if app_name_setting else 'PharmaEvents'
+    
     # This would typically send a password reset email
     flash('Password reset functionality is not implemented yet', 'info')
     return redirect(url_for('login'))
