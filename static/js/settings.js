@@ -13,18 +13,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle theme toggle
     const themeToggles = document.querySelectorAll('input[name="theme"]');
-    // Set initial theme based on current setting
     themeToggles.forEach(toggle => {
-        if (document.documentElement.getAttribute('data-bs-theme') === toggle.value) {
-            toggle.checked = true;
-        }
-        
-        toggle.addEventListener('change', function() {
+        toggle.addEventListener('change', async function() {
             const theme = this.value;
-            // Update the HTML element theme attribute
-            document.documentElement.setAttribute('data-bs-theme', theme);
-            // Save the setting to server
-            updateSettings({ theme: theme });
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ theme: theme })
+                });
+                
+                if (response.ok) {
+                    // Update UI theme
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                    // Show success message
+                    showAlert('Theme updated successfully', 'success');
+                    // Reload page to apply theme fully
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    showAlert('Failed to update theme', 'danger');
+                }
+            } catch (error) {
+                console.error('Error updating theme:', error);
+                showAlert('Error updating theme', 'danger');
+            }
         });
     });
 
