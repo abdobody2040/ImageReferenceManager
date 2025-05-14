@@ -1,6 +1,53 @@
-// Settings JavaScript for PharmaEvents
+// Settings page JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle application name update
+    const nameForm = document.getElementById('update_name');
+    if (nameForm) {
+        nameForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('app_name').value;
+            updateSettings({ name: name });
+        });
+    }
+
+    // Handle theme toggle
+    const themeToggles = document.querySelectorAll('input[name="theme"]');
+    themeToggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            updateSettings({ theme: this.value });
+        });
+    });
+
+    // Handle logo upload
+    const logoInput = document.getElementById('app_logo');
+    if (logoInput) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('logo', file);
+
+                fetch('/api/settings/logo', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Logo updated successfully', 'success');
+                    } else {
+                        showAlert('Error updating logo', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error updating logo', 'danger');
+                });
+            }
+        });
+    }
+
     // Category management
     const addCategoryForm = document.getElementById('add_category_form');
     if (addCategoryForm) {
@@ -31,6 +78,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize delete buttons
     initializeDeleteButtons();
 });
+
+function updateSettings(settings) {
+    fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Settings updated successfully', 'success');
+            if (settings.name) {
+                document.title = settings.name;
+            }
+        } else {
+            showAlert('Error updating settings', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error updating settings', 'danger');
+    });
+}
 
 // Add a new category
 function addCategory() {
@@ -333,23 +405,18 @@ function initializeDeleteButtons() {
 
 // Show alert message
 function showAlert(message, type) {
-    const alertsContainer = document.getElementById('alerts_container');
-    if (!alertsContainer) return;
-    
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type} alert-dismissible fade show`;
-    alert.innerHTML = `
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
-    
-    alertsContainer.appendChild(alert);
-    
-    // Auto-remove after 5 seconds
+
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.card'));
+
+    // Auto dismiss after 3 seconds
     setTimeout(() => {
-        alert.classList.remove('show');
-        setTimeout(() => {
-            alert.remove();
-        }, 150);
-    }, 5000);
+        alertDiv.remove();
+    }, 3000);
 }
