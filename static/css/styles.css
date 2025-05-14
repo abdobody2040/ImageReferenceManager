@@ -1,0 +1,318 @@
+/* Main Styles for PharmaEvents */
+
+:root {
+  --primary: #0f6e84;
+  --primary-dark: #0a5a6d;
+  --secondary: #4caf50;
+  --secondary-dark: #388e3c;
+  --light: #f8f9fa;
+  --gray: #6c757d;
+  --dark: #343a40;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --success: #28a745;
+  --info: #17a2b8;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f5f7f9;
+  color: #333;
+}
+
+/* Navbar */
+.navbar {
+  background-color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  color: white !important;
+}
+
+.navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500;
+}
+
+.navbar-nav .nav-link:hover {
+  color: white !important;
+}
+
+.navbar-nav .active .nav-link {
+  color: white !important;
+  font-weight: 700;
+}
+
+/* Cards */
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  font-weight: 600;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-dark);
+  border-color: var(--secondary-dark);
+}
+
+/* Login Page */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 40px 0;
+}
+
+.login-left {
+  padding: 2rem;
+}
+
+.login-right {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.login-logo {
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.login-title {
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+/* Dashboard */
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.stat-card .stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-label {
+  font-size: 0.875rem;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.chart-container {
+  position: relative;
+  height: 350px;
+  margin-bottom: 1.5rem;
+}
+
+/* Event Cards */
+.event-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-card .card-img-top {
+  height: 180px;
+  object-fit: cover;
+}
+
+.event-banner {
+  position: relative;
+}
+
+.event-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.event-details {
+  flex-grow: 1;
+}
+
+.event-category {
+  display: inline-block;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(15, 110, 132, 0.1);
+  color: var(--primary);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.event-info-icon {
+  color: var(--gray);
+  width: 1rem;
+  margin-right: 0.5rem;
+}
+
+.event-actions {
+  margin-top: auto;
+}
+
+/* Forms */
+.form-label {
+  font-weight: 500;
+}
+
+.required-field::after {
+  content: "*";
+  color: var(--danger);
+  margin-left: 4px;
+}
+
+.custom-file-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Settings Page */
+.settings-section {
+  margin-bottom: 2rem;
+}
+
+.settings-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* User Menu */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #6a11cb, #2575fc);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.user-menu {
+  min-width: 200px;
+}
+
+.dropdown-role {
+  padding: 0.25rem 1.5rem;
+  font-size: 0.875rem;
+  color: var(--gray);
+}
+
+.dropdown-role-item {
+  padding-left: 2rem;
+}
+
+.dropdown-role-item.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* Charts */
+.chart-section {
+  margin-bottom: 2rem;
+}
+
+.chart-section .card-header {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-left {
+    display: none;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 2rem;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+}
+
+/* Utility Classes */
+.text-primary {
+  color: var(--primary) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--secondary) !important;
+}
+
+.text-overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loading spinner */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  display: none;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}

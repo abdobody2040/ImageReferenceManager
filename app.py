@@ -1,0 +1,58 @@
+import os
+import logging
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
+from flask_login import LoginManager
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+class Base(DeclarativeBase):
+    pass
+
+# Initialize SQLAlchemy
+db = SQLAlchemy(model_class=Base)
+
+# Create Flask application
+app = Flask(__name__)
+
+# Configure application
+app.secret_key = os.environ.get("SESSION_SECRET", "pharmaevents_secret_key")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+# Configure database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///pharmaevents.db")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+app.config["UPLOAD_FOLDER"] = "static/uploads"
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2MB max upload
+
+# Initialize SQLAlchemy with application
+db.init_app(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "warning"
+
+# Create upload directory if it doesn't exist
+with app.app_context():
+    if not os.path.exists(app.config["UPLOAD_FOLDER"]):
+        os.makedirs(app.config["UPLOAD_FOLDER"])
+
+    # Import models and create tables
+    from models import User, Event, EventCategory, EventType, Venue, ServiceRequest, EmployeeCode
+    db.create_all()
+
+# Load user loader function
+from models import User
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
