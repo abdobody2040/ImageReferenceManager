@@ -1,8 +1,8 @@
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
-            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="PharmaEvents Logo" width="36" height="36" class="me-2">
-            <span>PharmaEvents</span>
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="{{ app_name }} Logo" width="36" height="36" class="me-2">
+            <span>{{ app_name }}</span>
         </a>
         
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
