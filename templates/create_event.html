@@ -288,7 +288,7 @@
             
             <div class="text-end">
                 <a href="{{ url_for('events') }}" class="btn btn-outline-secondary me-2">Cancel</a>
-                <button type="submit" class="btn btn-primary" onclick="showLoading()">
+                <button type="submit" class="btn btn-primary" id="submit_event_btn">
                     <i class="fas fa-save me-2"></i> {% if edit_mode %}Update{% else %}Create{% endif %} Event
                 </button>
             </div>

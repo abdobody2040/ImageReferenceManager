@@ -59,12 +59,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Form validation and submission
     const form = document.getElementById('event_form');
-    if (form) {
+    const submitButton = document.getElementById('submit_event_btn');
+    
+    if (form && submitButton) {
+        // Listen for form submission
         form.addEventListener('submit', function(event) {
+            // First validate the form
             if (!validateEventForm()) {
                 event.preventDefault();
-                return;
+                return false;
             }
+            
+            // Show loading overlay
+            const loadingOverlay = document.getElementById('loading_overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
+            
+            // Disable submit button to prevent double submission
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
             
             // Let the form submit naturally
             return true;
