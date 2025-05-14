@@ -51,24 +51,52 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form && submitButton) {
         // Listen for form submission
         form.addEventListener('submit', function(event) {
-            // Form validation
+            event.preventDefault();
+            
+            // Basic validation
             const description = document.getElementById('description').value.trim();
             const requesterName = document.getElementById('requester_name').value.trim();
-
-            if (!validateEventForm()) {
-                event.preventDefault();
+            const startDate = document.getElementById('start_date').value;
+            const startTime = document.getElementById('start_time').value;
+            const endDate = document.getElementById('end_date').value;
+            const endTime = document.getElementById('end_time').value;
+            const deadlineDate = document.getElementById('deadline_date').value;
+            const deadlineTime = document.getElementById('deadline_time').value;
+            
+            // Check required fields
+            if (!startDate || !startTime || !endDate || !endTime || !deadlineDate || !deadlineTime) {
+                alert('All date and time fields are required');
                 return false;
             }
 
             if (requesterName.length < 4) {
                 alert('Requester name must be at least 4 characters long');
-                event.preventDefault();
                 return false;
             }
 
             if (!description) {
                 alert('Event description is required');
-                event.preventDefault();
+                return false;
+            }
+
+            // Validate dates
+            const startDateTime = new Date(startDate + 'T' + startTime);
+            const endDateTime = new Date(endDate + 'T' + endTime);
+            const deadlineDateTime = new Date(deadlineDate + 'T' + deadlineTime);
+            const now = new Date();
+
+            if (deadlineDateTime < now) {
+                alert('Registration deadline cannot be in the past');
+                return false;
+            }
+
+            if (startDateTime < now) {
+                alert('Start date and time cannot be in the past');
+                return false;
+            }
+
+            if (deadlineDateTime > startDateTime) {
+                alert('Registration deadline must be before the event starts');
                 return false;
             }
 
@@ -82,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
 
-            // Let the form submit naturally
-            return true;
+            // Submit the form
+            form.submit();
         });
     }
 });
