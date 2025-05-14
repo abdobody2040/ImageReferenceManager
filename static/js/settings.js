@@ -377,22 +377,26 @@ function initializeDeleteButtons() {
     document.querySelectorAll('.btn-delete-user').forEach(button => {
         button.addEventListener('click', async function(e) {
             e.preventDefault();
+            e.stopPropagation();
             const id = this.getAttribute('data-id');
             if (confirm('Are you sure you want to delete this user?')) {
                 try {
                     const response = await fetch(`/api/users/${id}`, {
                         method: 'DELETE',
                         headers: {
-                            'Content-Type': 'application/json'
-                        }
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
                     });
                     
+                    const data = await response.json();
+                    
                     if (!response.ok) {
-                        const data = await response.json();
                         throw new Error(data.error || 'Failed to delete user');
                     }
                     
-                    const row = button.closest('tr');
+                    const row = this.closest('tr');
                     if (row) {
                         row.remove();
                         showAlert('User deleted successfully', 'success');
