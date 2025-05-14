@@ -1,9 +1,9 @@
 
 <?php
-$host = 'localhost';
+$host = '127.0.0.1';
 $dbname = 'pharmaevents';
 $username = 'root';
-$password = '';
+$password = 'password';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
