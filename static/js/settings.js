@@ -2,11 +2,11 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // Handle application name update
-    const nameForm = document.getElementById('update_name');
-    if (nameForm) {
-        nameForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('app_name').value;
+    const nameInput = document.getElementById('app_name');
+    const updateNameBtn = document.getElementById('update_name');
+    if (nameInput && updateNameBtn) {
+        updateNameBtn.addEventListener('click', function() {
+            const name = nameInput.value;
             updateSettings({ name: name });
         });
     }
@@ -21,9 +21,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle logo upload
     const logoInput = document.getElementById('app_logo');
-    if (logoInput) {
-        logoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
+    const uploadLogoBtn = document.getElementById('upload_logo');
+    if (logoInput && uploadLogoBtn) {
+        uploadLogoBtn.addEventListener('click', function() {
+            const file = logoInput.files[0];
             if (file) {
                 const formData = new FormData();
                 formData.append('logo', file);
@@ -53,20 +54,84 @@ document.addEventListener('DOMContentLoaded', function() {
     if (addCategoryForm) {
         addCategoryForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            addCategory();
+            const categoryName = document.getElementById('category_name').value;
+
+            const formData = new FormData();
+            formData.append('category_name', categoryName);
+
+            fetch('/api/categories', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    const categoryList = document.getElementById('category_list');
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-id', data.id);
+                    row.innerHTML = `
+                        <td>${data.name}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-danger btn-delete-category" data-id="${data.id}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    `;
+                    categoryList.appendChild(row);
+                    document.getElementById('category_name').value = '';
+                    showAlert('Category added successfully', 'success');
+                    initializeDeleteButtons();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error adding category', 'danger');
+            });
         });
     }
-    
+
     // Event type management
     const addTypeForm = document.getElementById('add_type_form');
     if (addTypeForm) {
         addTypeForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            addEventType();
+            const typeName = document.getElementById('type_name').value;
+
+            const formData = new FormData();
+            formData.append('type_name', typeName);
+
+            fetch('/api/event-types', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    const typeList = document.getElementById('type_list');
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-id', data.id);
+                    row.innerHTML = `
+                        <td>${data.name}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-danger btn-delete-type" data-id="${data.id}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    `;
+                    typeList.appendChild(row);
+                    document.getElementById('type_name').value = '';
+                    showAlert('Event type added successfully', 'success');
+                    initializeDeleteButtons();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error adding event type', 'danger');
+            });
         });
     }
-    
-    // User management
+
+        // User management
     const addUserForm = document.getElementById('add_user_form');
     if (addUserForm) {
         addUserForm.addEventListener('submit', function(e) {
@@ -74,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
             addUser();
         });
     }
-    
+
     // Initialize delete buttons
     initializeDeleteButtons();
 });
@@ -101,116 +166,6 @@ function updateSettings(settings) {
     .catch(error => {
         console.error('Error:', error);
         showAlert('Error updating settings', 'danger');
-    });
-}
-
-// Add a new category
-function addCategory() {
-    const nameInput = document.getElementById('category_name');
-    const name = nameInput.value.trim();
-    
-    if (!name) {
-        showAlert('Please enter a category name', 'danger');
-        return;
-    }
-    
-    // Create form data
-    const formData = new FormData();
-    formData.append('category_name', name);
-    
-    // Send request
-    fetch('/api/categories', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.error || 'Failed to add category'); });
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Add new category to the list
-        const categoryList = document.getElementById('category_list');
-        const row = document.createElement('tr');
-        row.setAttribute('data-id', data.id);
-        
-        row.innerHTML = `
-            <td>${data.name}</td>
-            <td class="text-end">
-                <button class="btn btn-sm btn-danger btn-delete-category" data-id="${data.id}">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </td>
-        `;
-        
-        categoryList.appendChild(row);
-        
-        // Clear input
-        nameInput.value = '';
-        
-        showAlert('Category added successfully', 'success');
-        
-        // Reinitialize delete buttons
-        initializeDeleteButtons();
-    })
-    .catch(error => {
-        showAlert(error.message, 'danger');
-    });
-}
-
-// Add a new event type
-function addEventType() {
-    const nameInput = document.getElementById('type_name');
-    const name = nameInput.value.trim();
-    
-    if (!name) {
-        showAlert('Please enter an event type name', 'danger');
-        return;
-    }
-    
-    // Create form data
-    const formData = new FormData();
-    formData.append('type_name', name);
-    
-    // Send request
-    fetch('/api/event-types', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.error || 'Failed to add event type'); });
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Add new event type to the list
-        const typeList = document.getElementById('type_list');
-        const row = document.createElement('tr');
-        row.setAttribute('data-id', data.id);
-        
-        row.innerHTML = `
-            <td>${data.name}</td>
-            <td class="text-end">
-                <button class="btn btn-sm btn-danger btn-delete-type" data-id="${data.id}">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </td>
-        `;
-        
-        typeList.appendChild(row);
-        
-        // Clear input
-        nameInput.value = '';
-        
-        showAlert('Event type added successfully', 'success');
-        
-        // Reinitialize delete buttons
-        initializeDeleteButtons();
-    })
-    .catch(error => {
-        showAlert(error.message, 'danger');
     });
 }
 
@@ -292,56 +247,64 @@ function addUser() {
     });
 }
 
-// Delete a category
-function deleteCategory(id) {
-    confirmAction('Are you sure you want to delete this category?', function() {
-        fetch(`/api/categories/${id}`, {
-            method: 'DELETE'
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Failed to delete category'); });
+
+function initializeDeleteButtons() {
+    // Category delete buttons
+    const categoryDeleteButtons = document.querySelectorAll('.btn-delete-category');
+    categoryDeleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this category?')) {
+                fetch(`/api/categories/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        row.remove();
+                        showAlert('Category deleted successfully', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error deleting category', 'danger');
+                });
             }
-            return response.json();
-        })
-        .then(data => {
-            // Remove row from table
-            const row = document.querySelector(`tr[data-id="${id}"]`);
-            if (row) {
-                row.remove();
-            }
-            
-            showAlert('Category deleted successfully', 'success');
-        })
-        .catch(error => {
-            showAlert(error.message, 'danger');
         });
     });
-}
 
-// Delete an event type
-function deleteEventType(id) {
-    confirmAction('Are you sure you want to delete this event type?', function() {
-        fetch(`/api/event-types/${id}`, {
-            method: 'DELETE'
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Failed to delete event type'); });
+    // Event type delete buttons
+    const typeDeleteButtons = document.querySelectorAll('.btn-delete-type');
+    typeDeleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this event type?')) {
+                fetch(`/api/event-types/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        row.remove();
+                        showAlert('Event type deleted successfully', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error deleting event type', 'danger');
+                });
             }
-            return response.json();
-        })
-        .then(data => {
-            // Remove row from table
-            const row = document.querySelector(`tr[data-id="${id}"]`);
-            if (row) {
-                row.remove();
-            }
-            
-            showAlert('Event type deleted successfully', 'success');
-        })
-        .catch(error => {
-            showAlert(error.message, 'danger');
+        });
+    });
+
+        // User delete buttons
+    const userDeleteButtons = document.querySelectorAll('.btn-delete-user');
+    userDeleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            deleteUser(id);
         });
     });
 }
@@ -373,36 +336,6 @@ function deleteUser(id) {
     });
 }
 
-// Initialize all delete buttons
-function initializeDeleteButtons() {
-    // Category delete buttons
-    const categoryDeleteButtons = document.querySelectorAll('.btn-delete-category');
-    categoryDeleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            deleteCategory(id);
-        });
-    });
-    
-    // Event type delete buttons
-    const typeDeleteButtons = document.querySelectorAll('.btn-delete-type');
-    typeDeleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            deleteEventType(id);
-        });
-    });
-    
-    // User delete buttons
-    const userDeleteButtons = document.querySelectorAll('.btn-delete-user');
-    userDeleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            deleteUser(id);
-        });
-    });
-}
-
 // Show alert message
 function showAlert(message, type) {
     const alertDiv = document.createElement('div');
@@ -413,10 +346,18 @@ function showAlert(message, type) {
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
 
-    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.card'));
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
 
     // Auto dismiss after 3 seconds
     setTimeout(() => {
         alertDiv.remove();
     }, 3000);
+}
+
+// Confirm action before delete
+function confirmAction(message, callback) {
+    if (window.confirm(message)) {
+        callback();
+    }
 }
