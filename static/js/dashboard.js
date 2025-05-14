@@ -1,46 +1,97 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Show loading spinner while dashboard initializes
+    showSpinner('Loading dashboard data...');
+    setupSpinnerTimeout(20000); // Set maximum wait time to 20 seconds
+    
+    // Track loading completion for all dashboard components
+    const loadingTasks = {
+        stats: false,
+        categoryChart: false,
+        typeChart: false,
+        monthlyChart: false,
+        requesterChart: false,
+        pendingEvents: document.getElementById('pending-events-container') ? false : true
+    };
+    
+    // Function to check if all loading is complete
+    function checkAllLoaded() {
+        const allLoaded = Object.values(loadingTasks).every(item => item === true);
+        if (allLoaded) {
+            hideSpinner();
+        }
+    }
+    
     // Load dashboard statistics
-    loadDashboardStats();
+    loadDashboardStats(loadingTasks, checkAllLoaded);
     
     // Initialize charts
-    initCategoryChart();
-    initTypeChart();
-    initMonthlyChart();
-    initRequesterChart();
+    initCategoryChart(loadingTasks, checkAllLoaded);
+    initTypeChart(loadingTasks, checkAllLoaded);
+    initMonthlyChart(loadingTasks, checkAllLoaded);
+    initRequesterChart(loadingTasks, checkAllLoaded);
     
     // Load pending events for admins
     if (document.getElementById('pending-events-container')) {
-        loadPendingEvents();
+        loadPendingEvents(loadingTasks, checkAllLoaded);
     }
 });
 
-// Load dashboard statistics
-function loadDashboardStats() {
+// Load dashboard statistics with robust error handling
+function loadDashboardStats(loadingTasks, callback) {
     fetch('/api/dashboard/statistics')
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
             // Update statistics cards
-            document.getElementById('total-events').textContent = data.total_events;
-            document.getElementById('upcoming-events').textContent = data.upcoming_events;
-            document.getElementById('online-events').textContent = data.online_events;
-            document.getElementById('offline-events').textContent = data.offline_events;
+            document.getElementById('total-events').textContent = data.total_events || '0';
+            document.getElementById('upcoming-events').textContent = data.upcoming_events || '0';
+            document.getElementById('online-events').textContent = data.online_events || '0';
+            document.getElementById('offline-events').textContent = data.offline_events || '0';
+            
+            // Mark task as complete
+            loadingTasks.stats = true;
+            callback();
         })
         .catch(error => {
             console.error('Error loading dashboard statistics:', error);
+            
+            // Provide fallback values on error
+            document.getElementById('total-events').textContent = '0';
+            document.getElementById('upcoming-events').textContent = '0';
+            document.getElementById('online-events').textContent = '0';
+            document.getElementById('offline-events').textContent = '0';
+            
+            // Display error message
+            const statsCards = document.querySelector('.row:first-of-type');
+            if (statsCards) {
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'col-12 mt-2';
+                errorAlert.innerHTML = `
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Could not load statistics data. Please try refreshing the page.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                statsCards.insertAdjacentElement('afterend', errorAlert);
+            }
+            
+            // Mark task as complete even on error
+            loadingTasks.stats = true;
+            callback();
         });
 }
 
 // Load pending events for admin dashboard
-function loadPendingEvents() {
+function loadPendingEvents(loadingTasks, callback) {
     fetch('/api/dashboard/pending-events')
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
@@ -50,8 +101,15 @@ function loadPendingEvents() {
             // Clear loading indicator
             container.innerHTML = '';
             
-            if (data.events.length === 0) {
+            if (!data.events || data.events.length === 0) {
                 container.innerHTML = '<p class="text-center py-4">No pending events found.</p>';
+                
+                // Mark task as complete
+                if (loadingTasks) {
+                    loadingTasks.pendingEvents = true;
+                    callback();
+                }
+                
                 return;
             }
             
@@ -81,9 +139,9 @@ function loadPendingEvents() {
                 const row = document.createElement('tr');
                 
                 row.innerHTML = `
-                    <td><a href="/events/${event.id}">${event.name}</a></td>
-                    <td>${event.requester_name}</td>
-                    <td>${formatDateTime(event.start_datetime)}</td>
+                    <td><a href="/events/${event.id}">${event.name || 'Unnamed Event'}</a></td>
+                    <td>${event.requester_name || 'Unknown'}</td>
+                    <td>${formatDateTime(event.start_datetime) || 'No date'}</td>
                     <td>
                         <a href="/events/${event.id}" class="btn btn-sm btn-info">View</a>
                         <a href="/events/${event.id}/approve" class="btn btn-sm btn-success">Approve</a>
@@ -93,21 +151,61 @@ function loadPendingEvents() {
                 
                 tbody.appendChild(row);
             });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.pendingEvents = true;
+                callback();
+            }
         })
         .catch(error => {
             console.error('Error loading pending events:', error);
             const container = document.getElementById('pending-events-container');
-            container.innerHTML = '<p class="text-center py-4 text-danger">Failed to load pending events. Please try again later.</p>';
+            container.innerHTML = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load pending events. Please try refreshing the page.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.pendingEvents = true;
+                callback();
+            }
         });
 }
 
 // Initialize category chart
-function initCategoryChart() {
+function initCategoryChart(loadingTasks, callback) {
     fetch('/api/dashboard/categories')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const ctx = document.getElementById('categoriesChart');
-            if (!ctx) return;
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.categoryChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle empty data
+            if (!data.labels || !data.values || data.labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No category data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.categoryChart = true;
+                    callback();
+                }
+                return;
+            }
             
             const colors = generateColors(data.labels.length);
             
@@ -131,19 +229,64 @@ function initCategoryChart() {
                     }
                 }
             });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.categoryChart = true;
+                callback();
+            }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading category chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('categoriesChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load category data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.categoryChart = true;
+                callback();
+            }
         });
 }
 
 // Initialize event type chart
-function initTypeChart() {
+function initTypeChart(loadingTasks, callback) {
     fetch('/api/dashboard/types')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const ctx = document.getElementById('typesChart');
-            if (!ctx) return;
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.typeChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle empty data
+            if (!data.labels || !data.values || data.labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No event type data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.typeChart = true;
+                    callback();
+                }
+                return;
+            }
             
             const colors = generateColors(data.labels.length);
             
@@ -167,19 +310,64 @@ function initTypeChart() {
                     }
                 }
             });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.typeChart = true;
+                callback();
+            }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading type chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('typesChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load event type data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.typeChart = true;
+                callback();
+            }
         });
 }
 
 // Initialize monthly events chart
-function initMonthlyChart() {
+function initMonthlyChart(loadingTasks, callback) {
     fetch('/api/dashboard/monthly')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const ctx = document.getElementById('monthlyChart');
-            if (!ctx) return;
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.monthlyChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle empty data
+            if (!data.labels || !data.values || data.labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No monthly event data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.monthlyChart = true;
+                    callback();
+                }
+                return;
+            }
             
             new Chart(ctx, {
                 type: 'bar',
@@ -206,19 +394,64 @@ function initMonthlyChart() {
                     }
                 }
             });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.monthlyChart = true;
+                callback();
+            }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading monthly chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('monthlyChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load monthly event data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.monthlyChart = true;
+                callback();
+            }
         });
 }
 
 // Initialize requester chart
-function initRequesterChart() {
+function initRequesterChart(loadingTasks, callback) {
     fetch('/api/dashboard/requesters')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const ctx = document.getElementById('requesterChart');
-            if (!ctx) return;
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.requesterChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle empty data
+            if (!data.labels || !data.values || data.labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No requester data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.requesterChart = true;
+                    callback();
+                }
+                return;
+            }
             
             const colors = generateColors(data.labels.length);
             
@@ -241,9 +474,32 @@ function initRequesterChart() {
                     }
                 }
             });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.requesterChart = true;
+                callback();
+            }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading requester chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('requesterChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load requester data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.requesterChart = true;
+                callback();
+            }
         });
 }
 
