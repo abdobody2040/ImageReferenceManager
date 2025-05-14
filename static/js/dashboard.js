@@ -262,14 +262,29 @@ function initCategoryChart(loadingTasks, callback) {
                 return;
             }
             
-            const colors = generateColors(data.labels.length);
+            // Handle different data formats
+            let labels = [];
+            let values = [];
+            
+            // If data is an array of objects with name/count properties
+            if (Array.isArray(data)) {
+                labels = data.map(item => item.name);
+                values = data.map(item => item.count);
+            }
+            // If data already has labels/values format
+            else if (data.labels && Array.isArray(data.labels)) {
+                labels = data.labels;
+                values = data.values;
+            }
+            
+            const colors = generateColors(labels.length);
             
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: data.labels,
+                    labels: labels,
                     datasets: [{
-                        data: data.values,
+                        data: values,
                         backgroundColor: colors,
                         hoverOffset: 4
                     }]
@@ -315,7 +330,8 @@ function initCategoryChart(loadingTasks, callback) {
 
 // Initialize event type chart
 function initTypeChart(loadingTasks, callback) {
-    fetch('/api/dashboard/types')
+    // Use the API with correct endpoint names
+    fetch('/api/dashboard/event-types')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Server returned ${response.status}: ${response.statusText}`);
@@ -332,8 +348,23 @@ function initTypeChart(loadingTasks, callback) {
                 return;
             }
             
+            // Handle different data formats
+            let labels = [];
+            let values = [];
+            
+            // If data is an array of objects with name/count properties
+            if (Array.isArray(data)) {
+                labels = data.map(item => item.name);
+                values = data.map(item => item.count);
+            }
+            // If data already has labels/values format
+            else if (data.labels && Array.isArray(data.labels)) {
+                labels = data.labels;
+                values = data.values;
+            }
+            
             // Handle empty data
-            if (!data.labels || !data.values || data.labels.length === 0) {
+            if (labels.length === 0) {
                 ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No event type data available</em></div>';
                 
                 if (loadingTasks) {
@@ -343,14 +374,14 @@ function initTypeChart(loadingTasks, callback) {
                 return;
             }
             
-            const colors = generateColors(data.labels.length);
+            const colors = generateColors(labels.length);
             
             new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: data.labels,
+                    labels: labels,
                     datasets: [{
-                        data: data.values,
+                        data: values,
                         backgroundColor: colors,
                         hoverOffset: 4
                     }]
