@@ -6,7 +6,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app import app, db
 from models import User, Event, EventCategory, EventType, Venue, ServiceRequest, EmployeeCode
-from helpers import allowed_file, get_governorates
+from helpers import allowed_file, get_governorates, admin_required, not_medical_rep, export_events_to_csv
 
 # Routes for authentication
 @app.route('/')
@@ -94,9 +94,14 @@ def events():
     category_id = request.args.get('category', 'all')
     event_type_id = request.args.get('type', 'all')
     date_filter = request.args.get('date', 'all')
+    status_filter = request.args.get('status', 'all')
     
     # Base query
     query = Event.query
+    
+    # For medical reps, only show their own events
+    if current_user.is_medical_rep():
+        query = query.filter_by(user_id=current_user.id)
     
     # Apply filters
     if search:
@@ -109,6 +114,9 @@ def events():
     
     if event_type_id != 'all' and event_type_id.isdigit():
         query = query.filter_by(event_type_id=int(event_type_id))
+        
+    if status_filter != 'all':
+        query = query.filter_by(status=status_filter)
     
     # Date filtering logic
     if date_filter == 'upcoming':
@@ -130,7 +138,49 @@ def events():
                           selected_category=category_id,
                           selected_type=event_type_id,
                           selected_date=date_filter,
+                          selected_status=status_filter,
                           search_query=search)
+                          
+@app.route('/events/export')
+@login_required
+@not_medical_rep
+def export_events():
+    # Get the same filters as in the events route
+    search = request.args.get('search', '')
+    category_id = request.args.get('category', 'all')
+    event_type_id = request.args.get('type', 'all')
+    date_filter = request.args.get('date', 'all')
+    status_filter = request.args.get('status', 'all')
+    
+    # Base query
+    query = Event.query
+    
+    # Apply filters
+    if search:
+        query = query.filter(Event.name.ilike(f'%{search}%'))
+    
+    if category_id != 'all' and category_id.isdigit():
+        category = EventCategory.query.get(int(category_id))
+        if category:
+            query = query.filter(Event.categories.contains(category))
+    
+    if event_type_id != 'all' and event_type_id.isdigit():
+        query = query.filter_by(event_type_id=int(event_type_id))
+        
+    if status_filter != 'all':
+        query = query.filter_by(status=status_filter)
+    
+    # Date filtering logic
+    if date_filter == 'upcoming':
+        query = query.filter(Event.start_datetime > datetime.utcnow())
+    elif date_filter == 'past':
+        query = query.filter(Event.start_datetime <= datetime.utcnow())
+    
+    # Execute query
+    events_list = query.order_by(Event.start_datetime.desc()).all()
+    
+    # Generate CSV response
+    return export_events_to_csv(events_list)
 
 @app.route('/events/<int:event_id>')
 @login_required
@@ -175,6 +225,11 @@ def create_event():
             flash('Invalid date or time format', 'danger')
             return redirect(url_for('create_event'))
         
+        # Set event status based on user role
+        status = 'pending'
+        if current_user.is_admin():
+            status = 'approved'  # Admins' events are auto-approved
+            
         # Create new event
         event = Event(
             name=name,
@@ -189,7 +244,8 @@ def create_event():
             employee_code_id=employee_code_id,
             event_type_id=event_type_id,
             description=description,
-            user_id=current_user.id
+            user_id=current_user.id,
+            status=status
         )
         
         # Add categories
@@ -204,7 +260,7 @@ def create_event():
             event.image_url = image_url
         elif 'event_banner' in request.files:
             file = request.files['event_banner']
-            if file and allowed_file(file.filename):
+            if file and file.filename and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 # Generate unique filename
                 unique_filename = f"{uuid.uuid4()}_{filename}"
@@ -215,7 +271,12 @@ def create_event():
         db.session.add(event)
         db.session.commit()
         
-        flash('Event created successfully!', 'success')
+        # Show appropriate message
+        if status == 'pending':
+            flash('Event created successfully! It will be visible after administrator approval.', 'success')
+        else:
+            flash('Event created successfully!', 'success')
+            
         return redirect(url_for('events'))
     
     # GET request - show the form
@@ -284,6 +345,15 @@ def edit_event(event_id):
         event.event_type_id = int(event_type_id)
         event.description = request.form.get('description')
         
+        # Check if status change was requested (only admins can change status)
+        if current_user.is_admin() and 'event_status' in request.form:
+            event.status = request.form.get('event_status')
+        
+        # If not admin and event was modified, set status back to pending for review
+        if not current_user.is_admin() and event.status == 'approved':
+            event.status = 'pending'
+            flash('Your changes will need to be approved by an administrator', 'info')
+        
         # Update categories
         event.categories = []
         category_ids = request.form.getlist('categories')
@@ -299,7 +369,7 @@ def edit_event(event_id):
             event.image_file = None
         elif 'event_banner' in request.files and request.files['event_banner'].filename:
             file = request.files['event_banner']
-            if file and allowed_file(file.filename):
+            if file and file.filename and allowed_file(file.filename):
                 # Remove old file if it exists
                 if event.image_file:
                     old_file_path = os.path.join(app.config['UPLOAD_FOLDER'], event.image_file)

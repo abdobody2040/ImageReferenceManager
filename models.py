@@ -13,7 +13,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # 'admin' or 'event_manager'
+    role = db.Column(db.String(20), nullable=False)  # 'admin', 'event_manager', or 'medical_rep'
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     events = db.relationship('Event', backref='creator', lazy=True)
@@ -26,6 +26,9 @@ class User(UserMixin, db.Model):
     
     def is_admin(self):
         return self.role == 'admin'
+        
+    def is_medical_rep(self):
+        return self.role == 'medical_rep'
 
 
 class EventCategory(db.Model):
@@ -96,6 +99,7 @@ class Event(db.Model):
     description = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'approved', 'rejected'
     
     # Many-to-many relationship with categories
     categories = db.relationship('EventCategory', secondary=event_categories,
@@ -106,3 +110,15 @@ class Event(db.Model):
     
     def get_status(self):
         return "Online" if self.is_online else "Offline"
+        
+    def get_approval_status(self):
+        return self.status
+        
+    def is_approved(self):
+        return self.status == 'approved'
+        
+    def is_pending(self):
+        return self.status == 'pending'
+        
+    def is_rejected(self):
+        return self.status == 'rejected'

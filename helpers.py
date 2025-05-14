@@ -1,6 +1,8 @@
 import re
+import csv
+import io
 from functools import wraps
-from flask import flash, redirect, url_for
+from flask import flash, redirect, url_for, Response
 from flask_login import current_user
 
 # Allowed file extensions for upload
@@ -20,6 +22,62 @@ def admin_required(f):
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
+    
+def not_medical_rep(f):
+    """Decorator to restrict medical rep from accessing certain routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_medical_rep():
+            flash('Medical representatives do not have access to this feature', 'danger')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def export_events_to_csv(events):
+    """Export events to a CSV file"""
+    output = io.StringIO()
+    fieldnames = [
+        'id', 'name', 'requester_name', 'is_online', 'start_datetime', 
+        'end_datetime', 'registration_deadline', 'governorate', 'venue', 
+        'service_request', 'employee_code', 'event_type', 'description', 
+        'created_at', 'created_by', 'approval_status', 'categories'
+    ]
+    
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    
+    for event in events:
+        venue_name = event.venue_details.name if event.venue_details else None
+        service_request_name = event.service_request.name if event.service_request else None
+        employee_code = event.employee.code if event.employee else None
+        event_type = event.event_type.name if event.event_type else None
+        categories = ", ".join([c.name for c in event.categories]) if event.categories else ""
+        
+        writer.writerow({
+            'id': event.id,
+            'name': event.name,
+            'requester_name': event.requester_name,
+            'is_online': "Yes" if event.is_online else "No",
+            'start_datetime': event.start_datetime.strftime('%Y-%m-%d %H:%M'),
+            'end_datetime': event.end_datetime.strftime('%Y-%m-%d %H:%M'),
+            'registration_deadline': event.registration_deadline.strftime('%Y-%m-%d %H:%M'),
+            'governorate': event.governorate,
+            'venue': venue_name,
+            'service_request': service_request_name,
+            'employee_code': employee_code,
+            'event_type': event_type,
+            'description': event.description,
+            'created_at': event.created_at.strftime('%Y-%m-%d %H:%M'),
+            'created_by': event.creator.email,
+            'approval_status': event.status,
+            'categories': categories
+        })
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=events_export.csv"}
+    )
 
 def get_governorates():
     """Return list of governorates in Egypt"""
