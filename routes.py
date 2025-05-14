@@ -496,20 +496,22 @@ def update_settings():
     data = request.json
     
     # Handle theme toggle
-    if 'theme' in data:
+    if 'theme' in data and data['theme'] in ['light', 'dark']:
         theme_setting = AppSetting.query.filter_by(key='theme').first()
         if not theme_setting:
             theme_setting = AppSetting(key='theme', value='light')
             db.session.add(theme_setting)
         theme_setting.value = data['theme']
+        db.session.commit()  # Commit the change immediately
     
     # Handle app name change
-    if 'name' in data:
+    if 'name' in data and data['name'].strip():
         name_setting = AppSetting.query.filter_by(key='app_name').first()
         if not name_setting:
             name_setting = AppSetting(key='app_name', value='PharmaEvents')
             db.session.add(name_setting)
-        name_setting.value = data['name']
+        name_setting.value = data['name'].strip()
+        db.session.commit()  # Commit the change immediately
     
     db.session.commit()
     return jsonify({'success': True})
