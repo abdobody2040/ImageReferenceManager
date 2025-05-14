@@ -23,20 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Handle venue dependency on governorate
-    const governorateSelect = document.getElementById('governorate');
-    const venueSelect = document.getElementById('venue_id');
-    
-    if (governorateSelect && venueSelect) {
-        governorateSelect.addEventListener('change', function() {
-            updateVenueOptions(this.value);
-        });
-        
-        // Initial update
-        if (governorateSelect.value) {
-            updateVenueOptions(governorateSelect.value);
-        }
-    }
+    // Venue is now free text, no dropdown handling needed
     
     // Online event toggle logic
     const onlineCheckbox = document.getElementById('is_online');

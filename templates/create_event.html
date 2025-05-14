@@ -191,17 +191,11 @@
                 <!-- Venue -->
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="venue_id" class="form-label">Venue (optional)</label>
-                        <select class="form-select" id="venue_id" name="venue_id">
-                            <option value="">Select a venue</option>
-                            {% for venue in venues %}
-                                <option value="{{ venue.id }}" data-governorate="{{ venue.governorate }}" 
-                                        {% if event and event.venue_id == venue.id %}selected{% endif %}>
-                                    {{ venue.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <small class="form-text text-muted">Select the venue for the event</small>
+                        <label for="venue_name" class="form-label">Venue Name (optional)</label>
+                        <input type="text" class="form-control" id="venue_name" name="venue_name" 
+                               placeholder="Enter venue name"
+                               value="{{ event.venue.name if event and event.venue else '' }}">
+                        <small class="form-text text-muted">Enter the name of the venue</small>
                     </div>
                 </div>
             </div>
