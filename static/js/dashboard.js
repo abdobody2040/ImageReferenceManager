@@ -1,7 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Show loading spinner while dashboard initializes
-    showSpinner('Loading dashboard data...');
-    setupSpinnerTimeout(20000); // Set maximum wait time to 20 seconds
+    // Initially hide any existing loading overlay
+    const loadingOverlay = document.getElementById('loading_overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+    
+    // Check if the spinner function exists
+    if (typeof showSpinner === 'function') {
+        // Show loading spinner while dashboard initializes
+        showSpinner('Loading dashboard data...');
+        if (typeof setupSpinnerTimeout === 'function') {
+            setupSpinnerTimeout(20000); // Set maximum wait time to 20 seconds
+        }
+    }
     
     // Track loading completion for all dashboard components
     const loadingTasks = {
@@ -17,7 +28,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function checkAllLoaded() {
         const allLoaded = Object.values(loadingTasks).every(item => item === true);
         if (allLoaded) {
-            hideSpinner();
+            // Always force hide spinners to ensure nothing is stuck
+            if (typeof forceHideSpinner === 'function') {
+                forceHideSpinner();
+            } else {
+                hideSpinner();
+                
+                // Double-check immediate spinner hiding
+                const loadingOverlay = document.getElementById('loading_overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+                
+                const globalSpinner = document.getElementById('global-loading-spinner');
+                if (globalSpinner) {
+                    globalSpinner.style.display = 'none';
+                }
+            }
+            
+            console.log('All dashboard components loaded successfully');
         }
     }
     

@@ -60,8 +60,8 @@
     {% block styles %}{% endblock %}
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div id="loading_overlay" class="loading-overlay">
+    <!-- Loading Overlay - Hidden by default -->
+    <div id="loading_overlay" class="loading-overlay" style="display: none;">
         <div class="text-center">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -69,6 +69,16 @@
             <div class="loading-message">Please wait while we process your request...</div>
         </div>
     </div>
+    
+    <script>
+    // Ensure loading overlay is hidden on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadingOverlay = document.getElementById('loading_overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+    });
+    </script>
     
     {% if current_user.is_authenticated %}
         {% include 'components/nav.html' %}

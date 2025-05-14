@@ -366,5 +366,17 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Make sure loading overlay is hidden immediately -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure loading overlay is hidden on page load
+    const loadingOverlay = document.getElementById('loading_overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+});
+</script>
+
+<!-- Dashboard scripts -->
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
