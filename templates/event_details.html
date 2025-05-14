@@ -70,6 +70,17 @@
         </nav>
     </div>
     <div class="col-md-4 text-md-end">
+        {% if current_user.is_admin() and event.status == 'pending' %}
+        <div class="btn-group mb-2 w-100">
+            <a href="{{ url_for('approve_event', event_id=event.id) }}" class="btn btn-success">
+                <i class="fas fa-check me-2"></i> Approve Event
+            </a>
+            <a href="{{ url_for('reject_event', event_id=event.id) }}" class="btn btn-danger">
+                <i class="fas fa-times me-2"></i> Reject Event
+            </a>
+        </div>
+        {% endif %}
+        
         <div class="btn-group">
             <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-outline-primary">
                 <i class="fas fa-edit me-2"></i> Edit
@@ -98,6 +109,21 @@
                 
                 {% if event.event_type %}
                     <span class="badge bg-primary me-2">{{ event.event_type.name }}</span>
+                {% endif %}
+                
+                <!-- Approval status badge -->
+                {% if event.status == 'pending' %}
+                    <span class="badge bg-warning me-2">
+                        <i class="fas fa-hourglass-half me-1"></i> Pending Approval
+                    </span>
+                {% elif event.status == 'rejected' %}
+                    <span class="badge bg-danger me-2">
+                        <i class="fas fa-times-circle me-1"></i> Rejected
+                    </span>
+                {% elif event.status == 'approved' %}
+                    <span class="badge bg-success me-2">
+                        <i class="fas fa-check-circle me-1"></i> Approved
+                    </span>
                 {% endif %}
                 
                 <span class="badge bg-secondary">

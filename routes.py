@@ -983,3 +983,37 @@ def init_db():
     db.session.commit()
     
     return "Database initialized with seed data!"
+
+# Event approval routes
+@app.route('/events/<int:event_id>/approve')
+@login_required
+@admin_required
+def approve_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    
+    if event.status != 'pending':
+        flash('This event is not pending approval.', 'warning')
+        return redirect(url_for('events'))
+    
+    event.status = 'approved'
+    db.session.commit()
+    
+    flash(f'Event "{event.name}" has been approved.', 'success')
+    return redirect(request.referrer or url_for('events', status='pending'))
+
+# Event rejection route
+@app.route('/events/<int:event_id>/reject')
+@login_required
+@admin_required
+def reject_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    
+    if event.status != 'pending':
+        flash('This event is not pending approval.', 'warning')
+        return redirect(url_for('events'))
+    
+    event.status = 'rejected'
+    db.session.commit()
+    
+    flash(f'Event "{event.name}" has been rejected.', 'warning')
+    return redirect(request.referrer or url_for('events', status='pending'))
