@@ -199,33 +199,62 @@ function validateEventForm() {
     const endTimeVal = document.getElementById('end_time').value;
     const deadlineDateVal = document.getElementById('deadline_date').value;
     const deadlineTimeVal = document.getElementById('deadline_time').value;
-
-    // Create date objects
-    const startDate = new Date(`${startDateVal}T${startTimeVal}`);
-    const endDate = new Date(`${endDateVal}T${endTimeVal}`);
-    const deadlineDate = new Date(`${deadlineDateVal}T${deadlineTimeVal}`);
+    
+    // Format for proper parsing
+    let startDateObj, endDateObj, deadlineDateObj;
     const now = new Date();
+    
+    try {
+        // Parse date strings properly using local date objects
+        // Format: yyyy-mm-dd hh:mm
+        startDateObj = new Date(`${startDateVal} ${startTimeVal}`);
+        endDateObj = new Date(`${endDateVal} ${endTimeVal}`);
+        deadlineDateObj = new Date(`${deadlineDateVal} ${deadlineTimeVal}`);
+        
+        // Debug info to console
+        console.log('Start Date:', startDateVal, startTimeVal, startDateObj);
+        console.log('End Date:', endDateVal, endTimeVal, endDateObj);
+        console.log('Deadline:', deadlineDateVal, deadlineTimeVal, deadlineDateObj);
+    } catch (e) {
+        console.error('Date parsing error:', e);
+    }
 
-    // Validate each date component
-    if (!startDateVal || !startTimeVal || isNaN(startDate.getTime())) {
+    // Validate start date
+    if (!startDateVal || !startTimeVal || isNaN(startDateObj.getTime())) {
+        document.getElementById('start_date').classList.add('is-invalid');
+        document.getElementById('start_time').classList.add('is-invalid');
         addErrorMessage(document.getElementById('start_date'), 'Please enter valid start date and time');
         isValid = false;
     }
 
-    if (!endDateVal || !endTimeVal || isNaN(endDate.getTime())) {
+    // Validate end date
+    if (!endDateVal || !endTimeVal || isNaN(endDateObj.getTime())) {
+        document.getElementById('end_date').classList.add('is-invalid');
+        document.getElementById('end_time').classList.add('is-invalid');
         addErrorMessage(document.getElementById('end_date'), 'Please enter valid end date and time');
         isValid = false;
     }
 
-    if (isNaN(deadlineDate.getTime())) {
-        addErrorMessage(document.getElementById('deadline_date'), 'Invalid deadline date');
+    // Validate deadline date
+    if (!deadlineDateVal || !deadlineTimeVal || isNaN(deadlineDateObj.getTime())) {
+        document.getElementById('deadline_date').classList.add('is-invalid');
+        document.getElementById('deadline_time').classList.add('is-invalid');
+        addErrorMessage(document.getElementById('deadline_date'), 'Please enter valid deadline date and time');
         isValid = false;
     }
 
-    // Check date logic
+    // Check date logic only if all dates are valid
     if (isValid) {
-        // Removed the condition that endDate > startDate so dates can be on the same day
-        if (deadlineDate >= startDate) {
+        // End date should be equal to or after start date
+        if (endDateObj < startDateObj) {
+            document.getElementById('end_date').classList.add('is-invalid');
+            addErrorMessage(document.getElementById('end_date'), 'End date must be after or equal to start date');
+            isValid = false;
+        }
+        
+        // Deadline must be before start date
+        if (deadlineDateObj >= startDateObj) {
+            document.getElementById('deadline_date').classList.add('is-invalid');
             addErrorMessage(document.getElementById('deadline_date'), 'Registration deadline must be before start date');
             isValid = false;
         }

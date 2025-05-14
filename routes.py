@@ -225,8 +225,20 @@ def create_event():
             start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
             end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
             registration_deadline = datetime.strptime(f"{deadline_date} {deadline_time}", "%Y-%m-%d %H:%M")
-        except ValueError:
-            flash('Invalid date or time format', 'danger')
+            
+            # Additional date validation
+            if end_datetime < start_datetime:
+                flash('End date must be after or equal to start date', 'danger')
+                return redirect(url_for('create_event'))
+                
+            if registration_deadline >= start_datetime:
+                flash('Registration deadline must be before the event start date', 'danger')
+                return redirect(url_for('create_event'))
+                
+        except ValueError as e:
+            # Print the specific error to help with debugging
+            print(f"Date parsing error: {str(e)}")
+            flash('Invalid date or time format. Please ensure all dates and times are correctly formatted.', 'danger')
             return redirect(url_for('create_event'))
         
         # Set event status based on user role
