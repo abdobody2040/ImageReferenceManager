@@ -47,8 +47,20 @@ with app.app_context():
         os.makedirs(app.config["UPLOAD_FOLDER"])
 
     # Import models and create tables
-    from models import User, Event, EventCategory, EventType, Venue, ServiceRequest, EmployeeCode
+    from models import User, Event, EventCategory, EventType, Venue, ServiceRequest, EmployeeCode, AppSetting
     db.create_all()
+    
+    # Initialize default settings if they don't exist
+    settings = {
+        'app_name': 'PharmaEvents',
+        'theme': 'light'
+    }
+    
+    for key, value in settings.items():
+        if not AppSetting.query.filter_by(key=key).first():
+            db.session.add(AppSetting(key=key, value=value))
+    
+    db.session.commit()
 
 # Load user loader function
 from models import User

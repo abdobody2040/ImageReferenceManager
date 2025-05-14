@@ -5,7 +5,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, s
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app import app, db
-from models import User, Event, EventCategory, EventType, Venue, ServiceRequest, EmployeeCode
+from models import User, Event, EventCategory, EventType, Venue, ServiceRequest, EmployeeCode, AppSetting
 from helpers import allowed_file, get_governorates, admin_required, not_medical_rep, export_events_to_csv
 
 # Routes for authentication
@@ -442,10 +442,77 @@ def settings():
     event_types = EventType.query.all()
     users = User.query.all()
     
+    # Get app settings
+    app_name = AppSetting.query.filter_by(key='app_name').first()
+    theme = AppSetting.query.filter_by(key='theme').first()
+    
     return render_template('settings.html',
                           categories=categories,
                           event_types=event_types,
-                          users=users)
+                          users=users,
+                          app_name=app_name.value if app_name else 'PharmaEvents',
+                          theme=theme.value if theme else 'light')
+                          
+# API endpoints for settings
+@app.route('/api/settings', methods=['POST'])
+@login_required
+@admin_required
+def update_settings():
+    data = request.json
+    
+    # Handle theme toggle
+    if 'theme' in data:
+        theme_setting = AppSetting.query.filter_by(key='theme').first()
+        if not theme_setting:
+            theme_setting = AppSetting(key='theme', value='light')
+            db.session.add(theme_setting)
+        theme_setting.value = data['theme']
+    
+    # Handle app name change
+    if 'name' in data:
+        name_setting = AppSetting.query.filter_by(key='app_name').first()
+        if not name_setting:
+            name_setting = AppSetting(key='app_name', value='PharmaEvents')
+            db.session.add(name_setting)
+        name_setting.value = data['name']
+    
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/settings/logo', methods=['POST'])
+@login_required
+@admin_required
+def update_logo():
+    if 'logo' not in request.files:
+        return jsonify({'success': False, 'error': 'No file part'})
+        
+    file = request.files['logo']
+    
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'})
+        
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        # Generate unique filename
+        unique_filename = f"logo_{uuid.uuid4()}_{filename}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        
+        # Update or create logo setting
+        logo_setting = AppSetting.query.filter_by(key='app_logo').first()
+        if not logo_setting:
+            logo_setting = AppSetting(key='app_logo', value=unique_filename)
+            db.session.add(logo_setting)
+        else:
+            # Remove old logo file if it exists
+            if logo_setting.value:
+                old_logo_path = os.path.join(app.config['UPLOAD_FOLDER'], logo_setting.value)
+                if os.path.exists(old_logo_path):
+                    os.remove(old_logo_path)
+            
+            logo_setting.value = unique_filename
+        
+        db.session.commit()
+        return jsonify({'success': True})
 
 @app.route('/api/categories', methods=['POST'])
 @login_required
