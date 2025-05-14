@@ -107,6 +107,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Disable submit button to prevent double submission
+            // Clear any previous validations
+            const allInputs = form.querySelectorAll('input, textarea');
+            allInputs.forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+
+            // Validate required fields again
+            let isValid = true;
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                return false;
+            }
+
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
 
