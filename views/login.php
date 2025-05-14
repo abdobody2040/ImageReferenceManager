@@ -1,82 +1,57 @@
 <?php
 $pageTitle = 'Login - ' . getSetting('app_name', 'PharmaEvents');
 $app_name = getSetting('app_name', 'PharmaEvents');
+$logo = getSetting('logo', '/static/img/logo.png');
+
 ob_start();
 ?>
 
-<div class="container login-container">
-    <div class="row justify-content-center align-items-center">
-        <div class="col-lg-5 login-left d-none d-lg-block">
-            <div class="text-center mb-4">
-                <img src="/static/img/logo.svg" alt="<?php echo $app_name; ?> Logo" width="80" height="80">
-                <h1 class="mt-3 login-title"><?php echo $app_name; ?></h1>
-                <p class="text-muted">Compliance-Driven Event Management</p>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12 col-md-9">
+            <div class="card o-hidden border-0 shadow-lg my-5">
+                <div class="card-body p-0">
+                    <div class="row">
+                        <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                        <div class="col-lg-6">
+                            <div class="p-5">
+                                <div class="text-center mb-4">
+                                    <img src="<?php echo $logo; ?>" alt="<?php echo $app_name; ?> Logo" class="img-fluid mb-3" style="max-height: 80px;">
+                                    <h1 class="h4 text-gray-900 mb-2"><?php echo $app_name; ?></h1>
+                                    <p class="text-muted">Welcome back! Please log in to continue.</p>
+                                </div>
+                                
+                                <form class="user" action="/login" method="post">
+                                    <div class="form-group mb-3">
+                                        <input type="email" class="form-control form-control-user" id="email" name="email" 
+                                            placeholder="Enter Email Address..." required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <input type="password" class="form-control form-control-user" id="password" name="password" 
+                                            placeholder="Password" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                                            <label class="form-check-label" for="remember">
+                                                Remember Me
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-user btn-block">
+                                        Login
+                                    </button>
+                                </form>
+                                
+                                <hr>
+                                <div class="text-center">
+                                    <a class="small" href="/forgot-password">Forgot Password?</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <h2 class="mb-4">Secure & Compliant Event Management for <?php echo $app_name; ?></h2>
-            
-            <p class="mb-4">Streamline your pharmaceutical events while maintaining strict regulatory compliance with GDPR, HIPAA, and Sunshine Act/EFPIA requirements.</p>
-            
-            <div class="mb-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="me-3 text-success">
-                        <i class="fas fa-check-circle fa-lg"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-0">Regulatory Compliance</h5>
-                        <p class="text-muted mb-0">Built-in tools for Sunshine Act reporting, HCP payment tracking, and compliance checks.</p>
-                    </div>
-                </div>
-                
-                <div class="d-flex align-items-center">
-                    <div class="me-3 text-primary">
-                        <i class="fas fa-shield-alt fa-lg"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-0">Role-based Access Control</h5>
-                        <p class="text-muted mb-0">Granular permissions for admins, event managers, speakers, and attendees.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-8 col-lg-5 login-right">
-            <div class="text-center d-block d-lg-none mb-4">
-                <img src="/static/img/logo.svg" alt="<?php echo $app_name; ?> Logo" width="80" height="80">
-                <h1 class="mt-3 login-title"><?php echo $app_name; ?></h1>
-                <p class="text-muted">Compliance-Driven Event Management</p>
-            </div>
-            
-            <h2 class="mb-4">Login to <?php echo $app_name; ?></h2>
-            <p class="text-muted mb-4">Enter your credentials to access the platform</p>
-            
-            <form method="POST" action="/login" class="needs-validation" novalidate>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email address</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="example@company.com" required>
-                    <div class="invalid-feedback">
-                        Please enter a valid email address.
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <label for="password" class="form-label">Password</label>
-                        <a href="/forgot-password" class="text-decoration-none small">Forgot password?</a>
-                    </div>
-                    <input type="password" class="form-control" id="password" name="password" required>
-                    <div class="invalid-feedback">
-                        Please enter your password.
-                    </div>
-                </div>
-                
-                <div class="mb-4 form-check">
-                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                    <label class="form-check-label" for="remember">Remember me</label>
-                </div>
-                
-                <button type="submit" class="btn btn-primary w-100">Sign In</button>
-            </form>
         </div>
     </div>
 </div>
