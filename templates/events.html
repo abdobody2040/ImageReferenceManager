@@ -148,11 +148,11 @@
                         
                         <div class="event-info">
                             <i class="far fa-calendar-alt text-muted"></i>
-                            {{ event.start_datetime.strftime('%b %d, %Y %H:%M') }}
+                            {{ event.start_datetime.strftime('%b %d, %Y %I:%M %p') }}
                             {% if event.start_datetime.date() != event.end_datetime.date() %}
-                                - {{ event.end_datetime.strftime('%b %d, %Y %H:%M') }}
+                                - {{ event.end_datetime.strftime('%b %d, %Y %I:%M %p') }}
                             {% else %}
-                                - {{ event.end_datetime.strftime('%H:%M') }}
+                                - {{ event.end_datetime.strftime('%I:%M %p') }}
                             {% endif %}
                         </div>
                         

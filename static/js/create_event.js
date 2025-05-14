@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     flatpickr('.time-picker', {
         enableTime: true,
         noCalendar: true,
-        dateFormat: 'H:i',
-        time_24hr: true,
+        dateFormat: 'h:i K',
+        time_24hr: false,
         allowInput: true
     });
     
