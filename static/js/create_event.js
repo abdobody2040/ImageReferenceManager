@@ -60,27 +60,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form validation and submission
     const form = document.getElementById('event_form');
     if (form) {
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
+        form.addEventListener('submit', function(event) {
             if (!validateEventForm()) {
+                event.preventDefault();
                 return;
             }
-
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
             
-            try {
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Please wait...';
-                
-                await form.submit();
-            } catch (error) {
-                console.error('Form submission error:', error);
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
-                alert('An error occurred while submitting the form. Please try again.');
-            }
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Please wait...';
         });
     }
 });
