@@ -336,12 +336,31 @@ def edit_event(event_id):
             venue_id = request.form.get('venue_id')
             event.venue_id = int(venue_id) if venue_id and venue_id.isdigit() else None
         
-        service_request_id = request.form.get('service_request_id')
-        employee_code_id = request.form.get('employee_code_id')
+        service_request_text = request.form.get('service_request')
+        employee_code_text = request.form.get('employee_code')
         event_type_id = request.form.get('event_type')
         
-        event.service_request_id = int(service_request_id) if service_request_id and service_request_id.isdigit() else None
-        event.employee_code_id = int(employee_code_id) if employee_code_id and employee_code_id.isdigit() else None
+        # Handle free text service request
+        if service_request_text:
+            service_request = ServiceRequest.query.filter_by(name=service_request_text).first()
+            if not service_request:
+                service_request = ServiceRequest(name=service_request_text)
+                db.session.add(service_request)
+                db.session.flush()
+            event.service_request_id = service_request.id
+        else:
+            event.service_request_id = None
+            
+        # Handle free text employee code
+        if employee_code_text:
+            employee_code = EmployeeCode.query.filter_by(code=employee_code_text).first()
+            if not employee_code:
+                employee_code = EmployeeCode(code=employee_code_text, name=employee_code_text)
+                db.session.add(employee_code)
+                db.session.flush()
+            event.employee_code_id = employee_code.id
+        else:
+            event.employee_code_id = None
         event.event_type_id = int(event_type_id)
         event.description = request.form.get('description')
         

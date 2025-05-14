@@ -209,30 +209,20 @@
                 <!-- Service Request -->
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="service_request_id" class="form-label">Service Request ID (optional)</label>
-                        <select class="form-select" id="service_request_id" name="service_request_id">
-                            <option value="">Select a service request</option>
-                            {% for sr in service_requests %}
-                                <option value="{{ sr.id }}" {% if event and event.service_request_id == sr.id %}selected{% endif %}>
-                                    {{ sr.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                        <label for="service_request" class="form-label">Service Request ID (optional)</label>
+                        <input type="text" class="form-control" id="service_request" name="service_request" 
+                               placeholder="Enter service request ID"
+                               value="{{ event.service_request.name if event and event.service_request else '' }}">
                     </div>
                 </div>
                 
                 <!-- Employee Code -->
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="employee_code_id" class="form-label">Employee Code (optional)</label>
-                        <select class="form-select" id="employee_code_id" name="employee_code_id">
-                            <option value="">Select an employee code</option>
-                            {% for ec in employee_codes %}
-                                <option value="{{ ec.id }}" {% if event and event.employee_code_id == ec.id %}selected{% endif %}>
-                                    {{ ec.code }} - {{ ec.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                        <label for="employee_code" class="form-label">Employee Code (optional)</label>
+                        <input type="text" class="form-control" id="employee_code" name="employee_code" 
+                               placeholder="Enter employee code"
+                               value="{{ event.employee.code if event and event.employee else '' }}">
                     </div>
                 </div>
                 
