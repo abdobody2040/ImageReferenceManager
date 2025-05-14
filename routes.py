@@ -223,15 +223,21 @@ def create_event():
         
         # Parse dates and times
         try:
+            # Validate that all date/time fields are present
+            if not all([start_date, start_time, end_date, end_time, deadline_date, deadline_time]):
+                flash('All date and time fields are required.', 'danger')
+                return redirect(url_for('create_event'))
+                
             # Validate date/time format
-            if not all([
-                re.match(r'^\d{4}-\d{2}-\d{2}$', start_date),
-                re.match(r'^\d{2}:\d{2}$', start_time),
-                re.match(r'^\d{4}-\d{2}-\d{2}$', end_date),
-                re.match(r'^\d{2}:\d{2}$', end_time),
-                re.match(r'^\d{4}-\d{2}-\d{2}$', deadline_date),
-                re.match(r'^\d{2}:\d{2}$', deadline_time)
-            ]):
+            date_pattern = r'^\d{4}-\d{2}-\d{2}$'
+            time_pattern = r'^\d{2}:\d{2}$'
+            
+            if not (re.match(date_pattern, start_date) and 
+                   re.match(time_pattern, start_time) and
+                   re.match(date_pattern, end_date) and
+                   re.match(time_pattern, end_time) and
+                   re.match(date_pattern, deadline_date) and
+                   re.match(time_pattern, deadline_time)):
                 flash('Invalid date or time format. Please use the date/time selectors.', 'danger')
                 return redirect(url_for('create_event'))
                 
