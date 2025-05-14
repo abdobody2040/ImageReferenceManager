@@ -29,8 +29,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const updateNameBtn = document.getElementById('update_name');
     if (nameInput && updateNameBtn) {
         updateNameBtn.addEventListener('click', function() {
-            const name = nameInput.value;
-            updateSettings({ name: name });
+            const name = nameInput.value.trim();
+            if (name) {
+                fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: name })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Application name updated successfully', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showAlert('Error updating application name', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error updating application name', 'danger');
+                });
+            }
         });
     }
 
@@ -190,30 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDeleteButtons();
 });
 
-function updateSettings(settings) {
-    fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Settings updated successfully', 'success');
-            if (settings.name) {
-                document.title = settings.name;
-            }
-        } else {
-            showAlert('Error updating settings', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Error updating settings', 'danger');
-    });
-}
+
 
 // Add a new user
 function addUser() {
