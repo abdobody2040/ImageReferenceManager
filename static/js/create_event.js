@@ -202,3 +202,89 @@ function addErrorMessage(field, message) {
     
     field.parentNode.appendChild(errorDiv);
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const form = document.getElementById('create_event_form');
+    const startDate = document.getElementById('start_date');
+    const startTime = document.getElementById('start_time');
+    const endDate = document.getElementById('end_date');
+    const endTime = document.getElementById('end_time');
+    const deadlineDate = document.getElementById('deadline_date');
+    const deadlineTime = document.getElementById('deadline_time');
+    const isOnlineCheckbox = document.getElementById('is_online');
+    const venueFields = document.getElementById('venue_fields');
+    const imageInput = document.getElementById('event_banner');
+    const imagePreview = document.getElementById('image_preview');
+    const imagePreviewContainer = document.getElementById('image_preview_container');
+
+    // Set min dates to today
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    startDate.min = todayStr;
+    endDate.min = todayStr;
+    deadlineDate.min = todayStr;
+
+    // Event Handlers
+    if (isOnlineCheckbox) {
+        isOnlineCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                venueFields.classList.add('d-none');
+            } else {
+                venueFields.classList.remove('d-none');
+            }
+        });
+    }
+
+    // Image preview handler
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Form validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Basic validation
+            const startDateTime = new Date(startDate.value + 'T' + startTime.value);
+            const endDateTime = new Date(endDate.value + 'T' + endTime.value);
+            const deadlineDateTime = new Date(deadlineDate.value + 'T' + deadlineTime.value);
+            const now = new Date();
+
+            if (deadlineDateTime < now) {
+                alert('Registration deadline cannot be in the past');
+                return;
+            }
+
+            if (startDateTime < now) {
+                alert('Start date and time cannot be in the past');
+                return;
+            }
+
+            if (endDateTime < startDateTime) {
+                alert('End date and time must be after start date and time');
+                return;
+            }
+
+            if (deadlineDateTime > startDateTime) {
+                alert('Registration deadline must be before the event starts');
+                return;
+            }
+
+            // If all validation passes, submit the form
+            form.submit();
+        });
+    }
+});
