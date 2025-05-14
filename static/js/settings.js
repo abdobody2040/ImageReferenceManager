@@ -304,23 +304,31 @@ function addUser() {
 
 
 function initializeDeleteButtons() {
+    // Remove any existing event listeners
+    document.querySelectorAll('.btn-delete-category, .btn-delete-type, .btn-delete-user').forEach(button => {
+        button.replaceWith(button.cloneNode(true));
+    });
+
     // Category delete buttons
-    const categoryDeleteButtons = document.querySelectorAll('.btn-delete-category');
-    categoryDeleteButtons.forEach(button => {
-        button.addEventListener('click', async function() {
+    document.querySelectorAll('.btn-delete-category').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
             const id = this.getAttribute('data-id');
             if (confirm('Are you sure you want to delete this category?')) {
                 try {
                     const response = await fetch(`/api/categories/${id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     });
-                    const data = await response.json();
                     
                     if (!response.ok) {
+                        const data = await response.json();
                         throw new Error(data.error || 'Failed to delete category');
                     }
                     
-                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    const row = button.closest('tr');
                     if (row) {
                         row.remove();
                         showAlert('Category deleted successfully', 'success');
@@ -334,22 +342,25 @@ function initializeDeleteButtons() {
     });
 
     // Event type delete buttons
-    const typeDeleteButtons = document.querySelectorAll('.btn-delete-type');
-    typeDeleteButtons.forEach(button => {
-        button.addEventListener('click', async function() {
+    document.querySelectorAll('.btn-delete-type').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
             const id = this.getAttribute('data-id');
             if (confirm('Are you sure you want to delete this event type?')) {
                 try {
                     const response = await fetch(`/api/event-types/${id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     });
-                    const data = await response.json();
                     
                     if (!response.ok) {
+                        const data = await response.json();
                         throw new Error(data.error || 'Failed to delete event type');
                     }
                     
-                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    const row = button.closest('tr');
                     if (row) {
                         row.remove();
                         showAlert('Event type deleted successfully', 'success');
@@ -362,12 +373,35 @@ function initializeDeleteButtons() {
         });
     });
 
-        // User delete buttons
-    const userDeleteButtons = document.querySelectorAll('.btn-delete-user');
-    userDeleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
+    // User delete buttons
+    document.querySelectorAll('.btn-delete-user').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
             const id = this.getAttribute('data-id');
-            deleteUser(id);
+            if (confirm('Are you sure you want to delete this user?')) {
+                try {
+                    const response = await fetch(`/api/users/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error || 'Failed to delete user');
+                    }
+                    
+                    const row = button.closest('tr');
+                    if (row) {
+                        row.remove();
+                        showAlert('User deleted successfully', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert(error.message || 'Error deleting user', 'danger');
+                }
+            }
         });
     });
 }
