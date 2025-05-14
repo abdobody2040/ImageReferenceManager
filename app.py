@@ -23,7 +23,12 @@ app.secret_key = os.environ.get("SESSION_SECRET", "pharmaevents_secret_key")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure database
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///pharmaevents.db")
+# Use PostgreSQL if DATABASE_URL is available, otherwise fall back to SQLite for development
+db_url = os.environ.get("DATABASE_URL")
+if db_url and db_url.startswith("postgres://"):
+    # Heroku workaround for SQLAlchemy 1.4+
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url or "sqlite:///pharmaevents.db"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
