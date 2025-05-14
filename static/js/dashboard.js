@@ -1,18 +1,44 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Dashboard JS loaded");
+    
     // Initially hide any existing loading overlay
     const loadingOverlay = document.getElementById('loading_overlay');
     if (loadingOverlay) {
         loadingOverlay.style.display = 'none';
+        // Double ensure it's hidden with !important
+        loadingOverlay.style.cssText += 'display: none !important;';
     }
     
-    // Check if the spinner function exists
-    if (typeof showSpinner === 'function') {
-        // Show loading spinner while dashboard initializes
-        showSpinner('Loading dashboard data...');
-        if (typeof setupSpinnerTimeout === 'function') {
-            setupSpinnerTimeout(20000); // Set maximum wait time to 20 seconds
+    // Don't show loading spinner - we've had issues with it
+    // Instead, just set a timeout to forcibly complete all loading tasks
+    setTimeout(function() {
+        console.log("Emergency timeout - forcing all tasks complete");
+        
+        // Mark all tasks as complete
+        Object.keys(loadingTasks).forEach(function(key) {
+            loadingTasks[key] = true;
+        });
+        
+        // Call checkAllLoaded to finish
+        checkAllLoaded();
+        
+        // Double ensure any spinners are hidden
+        if (typeof forceHideSpinner === 'function') {
+            forceHideSpinner();
         }
-    }
+        
+        // Force hide any overlays directly
+        const overlay = document.getElementById('loading_overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            overlay.style.cssText += 'display: none !important;';
+        }
+        
+        const spinner = document.getElementById('global-loading-spinner');
+        if (spinner) {
+            spinner.style.display = 'none';
+        }
+    }, 5000); // Emergency timeout after 5 seconds
     
     // Track loading completion for all dashboard components
     const loadingTasks = {
