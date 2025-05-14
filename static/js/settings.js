@@ -345,22 +345,26 @@ function initializeDeleteButtons() {
     document.querySelectorAll('.btn-delete-type').forEach(button => {
         button.addEventListener('click', async function(e) {
             e.preventDefault();
+            e.stopPropagation();
             const id = this.getAttribute('data-id');
             if (confirm('Are you sure you want to delete this event type?')) {
                 try {
                     const response = await fetch(`/api/event-types/${id}`, {
                         method: 'DELETE',
                         headers: {
-                            'Content-Type': 'application/json'
-                        }
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
                     });
                     
+                    const data = await response.json();
+                    
                     if (!response.ok) {
-                        const data = await response.json();
                         throw new Error(data.error || 'Failed to delete event type');
                     }
                     
-                    const row = button.closest('tr');
+                    const row = this.closest('tr');
                     if (row) {
                         row.remove();
                         showAlert('Event type deleted successfully', 'success');
