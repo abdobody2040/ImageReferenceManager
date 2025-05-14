@@ -192,30 +192,28 @@ function validateEventForm() {
         }
     });
 
-    // Validate date ranges
-    const startDate = new Date(
-        document.getElementById('start_date').value + 'T' + 
-        document.getElementById('start_time').value
-    );
+    // Get date and time values
+    const startDateVal = document.getElementById('start_date').value;
+    const startTimeVal = document.getElementById('start_time').value;
+    const endDateVal = document.getElementById('end_date').value;
+    const endTimeVal = document.getElementById('end_time').value;
+    const deadlineDateVal = document.getElementById('deadline_date').value;
+    const deadlineTimeVal = document.getElementById('deadline_time').value;
 
-    const endDate = new Date(
-        document.getElementById('end_date').value + 'T' + 
-        document.getElementById('end_time').value
-    );
+    // Create date objects
+    const startDate = new Date(`${startDateVal}T${startTimeVal}`);
+    const endDate = new Date(`${endDateVal}T${endTimeVal}`);
+    const deadlineDate = new Date(`${deadlineDateVal}T${deadlineTimeVal}`);
+    const now = new Date();
 
-    const deadlineDate = new Date(
-        document.getElementById('deadline_date').value + 'T' + 
-        document.getElementById('deadline_time').value
-    );
-
-    // Check if dates are valid
-    if (isNaN(startDate.getTime())) {
-        addErrorMessage(document.getElementById('start_date'), 'Invalid start date');
+    // Validate each date component
+    if (!startDateVal || !startTimeVal || isNaN(startDate.getTime())) {
+        addErrorMessage(document.getElementById('start_date'), 'Please enter valid start date and time');
         isValid = false;
     }
 
-    if (isNaN(endDate.getTime())) {
-        addErrorMessage(document.getElementById('end_date'), 'Invalid end date');
+    if (!endDateVal || !endTimeVal || isNaN(endDate.getTime())) {
+        addErrorMessage(document.getElementById('end_date'), 'Please enter valid end date and time');
         isValid = false;
     }
 
