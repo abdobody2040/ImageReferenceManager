@@ -307,24 +307,28 @@ function initializeDeleteButtons() {
     // Category delete buttons
     const categoryDeleteButtons = document.querySelectorAll('.btn-delete-category');
     categoryDeleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             const id = this.getAttribute('data-id');
             if (confirm('Are you sure you want to delete this category?')) {
-                fetch(`/api/categories/${id}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(data => {
+                try {
+                    const response = await fetch(`/api/categories/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to delete category');
+                    }
+                    
                     const row = document.querySelector(`tr[data-id="${id}"]`);
                     if (row) {
                         row.remove();
                         showAlert('Category deleted successfully', 'success');
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error:', error);
-                    showAlert('Error deleting category', 'danger');
-                });
+                    showAlert(error.message || 'Error deleting category', 'danger');
+                }
             }
         });
     });
@@ -332,24 +336,28 @@ function initializeDeleteButtons() {
     // Event type delete buttons
     const typeDeleteButtons = document.querySelectorAll('.btn-delete-type');
     typeDeleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             const id = this.getAttribute('data-id');
             if (confirm('Are you sure you want to delete this event type?')) {
-                fetch(`/api/event-types/${id}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(data => {
+                try {
+                    const response = await fetch(`/api/event-types/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to delete event type');
+                    }
+                    
                     const row = document.querySelector(`tr[data-id="${id}"]`);
                     if (row) {
                         row.remove();
                         showAlert('Event type deleted successfully', 'success');
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error:', error);
-                    showAlert('Error deleting event type', 'danger');
-                });
+                    showAlert(error.message || 'Error deleting event type', 'danger');
+                }
             }
         });
     });
@@ -365,30 +373,28 @@ function initializeDeleteButtons() {
 }
 
 // Delete a user
-function deleteUser(id) {
-    confirmAction('Are you sure you want to delete this user?', function() {
-        fetch(`/api/users/${id}`, {
-            method: 'DELETE'
-        })
-        .then(response => {
+async function deleteUser(id) {
+    if (confirm('Are you sure you want to delete this user?')) {
+        try {
+            const response = await fetch(`/api/users/${id}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            
             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Failed to delete user'); });
+                throw new Error(data.error || 'Failed to delete user');
             }
-            return response.json();
-        })
-        .then(data => {
-            // Remove row from table
+            
             const row = document.querySelector(`tr[data-id="${id}"]`);
             if (row) {
                 row.remove();
+                showAlert('User deleted successfully', 'success');
             }
-            
-            showAlert('User deleted successfully', 'success');
-        })
-        .catch(error => {
-            showAlert(error.message, 'danger');
-        });
-    });
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert(error.message || 'Error deleting user', 'danger');
+        }
+    }
 }
 
 // Show alert message
