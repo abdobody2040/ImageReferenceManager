@@ -10,6 +10,7 @@ session_start();
 // Include configuration files
 require_once 'config/database.php';
 require_once 'config/functions.php';
+require_once 'config/error_handler.php';
 
 // Define routes and their corresponding files
 $routes = [
@@ -44,7 +45,8 @@ $routes = [
     '/api/dashboard/categories' => 'routes/api/dashboard_categories.php',
     '/api/dashboard/types' => 'routes/api/dashboard_types.php',
     '/api/dashboard/monthly' => 'routes/api/dashboard_monthly.php',
-    '/api/dashboard/requesters' => 'routes/api/dashboard_requesters.php'
+    '/api/dashboard/requesters' => 'routes/api/dashboard_requesters.php',
+    '/api/events' => 'routes/api/events.php'
 ];
 
 // Route for POST requests to login
