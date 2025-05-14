@@ -39,6 +39,10 @@ switch ($request) {
         requireAuth();
         require 'routes/events.php';
         break;
+    case $base_path . 'events/create':
+        requireAuth();
+        require 'routes/events.php';
+        break;
     default:
         http_response_code(404);
         require 'views/404.php';
