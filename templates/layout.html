@@ -6,6 +6,30 @@
     <title>{% block title %}{{ app_name if app_name else 'PharmaEvents' }} - Secure & Compliant Event Management{% endblock %}</title>
     
     <!-- Emergency fix scripts - Immediately hide loading overlay -->
+    <script>
+    // Direct inline fix for loading overlay - runs before anything else
+    (function() {
+        function hideLoading() {
+            var overlays = document.querySelectorAll('.loading-overlay, #loading-overlay, #loading_overlay, .spinner-container, .loading-indicator');
+            overlays.forEach(function(overlay) {
+                if (overlay) overlay.style.display = 'none';
+            });
+            
+            // Also reset any spinner counters
+            if (typeof window.spinnerCounter !== 'undefined') window.spinnerCounter = 0;
+            if (typeof window.loadingCounter !== 'undefined') window.loadingCounter = 0;
+        }
+        
+        // Run immediately
+        hideLoading();
+        
+        // Run when DOM loads
+        document.addEventListener('DOMContentLoaded', hideLoading);
+        
+        // Run periodically
+        setInterval(hideLoading, 2000);
+    })();
+    </script>
     <script src="{{ url_for('static', filename='js/fix-loading-overlay.js') }}"></script>
     <script src="{{ url_for('static', filename='js/universal-loading-fix.js') }}"></script>
     
