@@ -632,39 +632,6 @@ def delete_category(category_id):
     
     return jsonify({"message": "Category deleted successfully"}), 200
 
-@app.route('/api/dashboard/event-types')
-@login_required
-def dashboard_event_types():
-    try:
-        # Get event types for chart
-        event_types = EventType.query.all()
-        
-        # Format for Chart.js
-        labels = []
-        values = []
-        
-        # Build data arrays
-        for event_type in event_types:
-            try:
-                count = Event.query.filter_by(event_type_id=event_type.id).count()
-                if count > 0:
-                    labels.append(event_type.name)
-                    values.append(count)
-            except Exception as e:
-                app.logger.error(f"Error getting count for event type {event_type.name}: {str(e)}")
-        
-        # Return in the format expected by Chart.js
-        return jsonify({
-            "labels": labels,
-            "values": values
-        })
-    except Exception as e:
-        app.logger.error(f"Error getting event type data: {str(e)}")
-        return jsonify({
-            "labels": [],
-            "values": []
-        })
-
 @app.route('/api/event-types', methods=['POST'])
 @login_required
 def add_event_type():
@@ -767,7 +734,22 @@ def dashboard_statistics():
         "total_events": total_events
     })
 
-# This endpoint was replaced by a more robust implementation below
+@app.route('/api/dashboard/categories')
+@login_required
+def dashboard_categories():
+    # Get category data for chart
+    categories = EventCategory.query.all()
+    data = []
+    
+    for category in categories:
+        count = Event.query.filter(Event.categories.contains(category)).count()
+        if count > 0:
+            data.append({
+                "name": category.name,
+                "count": count
+            })
+    
+    return jsonify(data)
 
 @app.route('/api/dashboard/monthly-events')
 @login_required
@@ -807,85 +789,31 @@ def monthly_events():
     
     return jsonify({
         "labels": months,
-        "values": counts
+        "data": counts
     })
 
-@app.route('/api/dashboard/requesters')
+@app.route('/api/dashboard/events-by-requester')
 @login_required
 def events_by_requester():
-    try:
-        # Get top requesters
-        requesters = db.session.query(
-            Event.requester_name, 
-            db.func.count(Event.id).label('count')
-        ).group_by(Event.requester_name).order_by(db.desc('count')).limit(5).all()
-        
-        # Format for Chart.js
-        labels = []
-        values = []
-        
-        for requester in requesters:
-            if requester.requester_name:  # Avoid empty names
-                labels.append(requester.requester_name)
-                values.append(requester.count)
-        
-        # Return in the format expected by Chart.js
-        return jsonify({
-            "labels": labels,
-            "values": values
+    # Get top requesters
+    requesters = db.session.query(
+        Event.requester_name, 
+        db.func.count(Event.id).label('count')
+    ).group_by(Event.requester_name).order_by(db.desc('count')).limit(5).all()
+    
+    data = []
+    for requester in requesters:
+        data.append({
+            "name": requester.requester_name,
+            "count": requester.count
         })
-    except Exception as e:
-        app.logger.error(f"Error getting requester data: {str(e)}")
-        return jsonify({
-            "labels": [],
-            "values": []
-        })
+    
+    return jsonify(data)
 
 # Uploads handler
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-# API endpoint for category chart data
-@app.route('/api/dashboard/categories')
-@login_required
-def dashboard_categories_chart():
-    try:
-        # Get categories for chart
-        categories = EventCategory.query.all()
-        
-        # Format for Chart.js
-        labels = []
-        values = []
-        
-        # Build data arrays
-        for category in categories:
-            try:
-                # Import the event_categories association table from models
-                from models import event_categories
-                
-                # Use the association table to count events for each category
-                count = db.session.query(event_categories).filter(
-                    event_categories.c.category_id == category.id
-                ).count()
-                
-                if count > 0:
-                    labels.append(category.name)
-                    values.append(count)
-            except Exception as e:
-                app.logger.error(f"Error getting count for category {category.name}: {str(e)}")
-        
-        # Return in the format expected by Chart.js
-        return jsonify({
-            "labels": labels,
-            "values": values
-        })
-    except Exception as e:
-        app.logger.error(f"Error getting category data: {str(e)}")
-        return jsonify({
-            "labels": [],
-            "values": []
-        })
 
 # Route to update database schema (for when we add new columns)
 @app.route('/migrate-db', methods=['GET'])
