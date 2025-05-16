@@ -108,7 +108,6 @@ class Event(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'approved', 'rejected'
-    attendees_file = db.Column(db.String(255), nullable=False)  # Store the uploaded attendees list filename
     
     # Many-to-many relationship with categories
     categories = db.relationship('EventCategory', secondary=event_categories,
