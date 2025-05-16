@@ -9,23 +9,42 @@
     
     // Function to hide loading overlays
     function hideAllLoadingOverlays() {
-        // Hide the main loading overlay
-        const loadingOverlay = document.getElementById('loading_overlay');
-        if (loadingOverlay) {
-            console.log("Found loading overlay, hiding it");
-            loadingOverlay.style.display = 'none';
-        }
+        // Hide any loading overlay by ID
+        const overlayIds = ['loading_overlay', 'loading-overlay', 'global-loading-spinner', 'spinner'];
+        overlayIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                console.log("Found loading overlay, hiding it");
+                element.style.display = 'none';
+            }
+        });
         
-        // Hide any custom spinner
-        const globalSpinner = document.getElementById('global-loading-spinner');
-        if (globalSpinner) {
-            console.log("Found global spinner, hiding it");
-            globalSpinner.style.display = 'none';
-        }
+        // Hide any loading overlay by class
+        const overlayClasses = ['.loading-overlay', '.spinner-container', '.loading-container', '.spinner-wrapper'];
+        overlayClasses.forEach(className => {
+            const elements = document.querySelectorAll(className);
+            elements.forEach(element => {
+                element.style.display = 'none';
+            });
+        });
+        
+        // Hide any spinner elements
+        const spinners = document.querySelectorAll('.spinner-border, .spinner-grow');
+        spinners.forEach(spinner => {
+            const parent = spinner.closest('.loading-indicator, .spinner-wrapper');
+            if (parent) {
+                parent.style.display = 'none';
+            }
+        });
         
         // Reset spinner counter if it exists
         if (typeof spinnerCounter !== 'undefined') {
             spinnerCounter = 0;
+        }
+        
+        // Reset any spinner timeout
+        if (typeof spinnerTimeout !== 'undefined' && spinnerTimeout) {
+            clearTimeout(spinnerTimeout);
         }
     }
 
