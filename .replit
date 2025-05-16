@@ -2,14 +2,14 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["openssl", "postgresql"]
+packages = ["openssl", "postgresql", "php"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "php -S 0.0.0.0:5000 index.php"]
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "PHP Server"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -28,40 +28,6 @@ author = "agent"
 task = "shell.exec"
 args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Start PHP Server"
-author = 41935773
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "php -S 0.0.0.0:5000"
-
-[[workflows.workflow]]
-name = "PHP Server"
-author = 41935773
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "mysqld &"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 2"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "mysql -u root -e \"CREATE DATABASE IF NOT EXISTS pharmaevents;\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "mysql -u root pharmaevents < database.sql"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "php -S 0.0.0.0:5000 index.php"
 
 [[ports]]
 localPort = 5000

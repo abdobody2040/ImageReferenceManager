@@ -1,67 +1,292 @@
-// Dashboard JavaScript for PharmaEvents
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Category Chart
-    const categoryChartCtx = document.getElementById('categoryChart');
-    if (categoryChartCtx) {
-        initCategoryChart();
+    console.log("Dashboard JS loaded");
+    
+    // Initially hide any existing loading overlay
+    const loadingOverlay = document.getElementById('loading_overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+        // Double ensure it's hidden with !important
+        loadingOverlay.style.cssText += 'display: none !important;';
     }
     
-    // Initialize Event Type Distribution Chart
-    const typeChartCtx = document.getElementById('typeChart');
-    if (typeChartCtx) {
-        initTypeChart();
-    }
+    // Don't show loading spinner - we've had issues with it
+    // Instead, just set a timeout to forcibly complete all loading tasks
+    setTimeout(function() {
+        console.log("Emergency timeout - forcing all tasks complete");
+        
+        // Mark all tasks as complete
+        Object.keys(loadingTasks).forEach(function(key) {
+            loadingTasks[key] = true;
+        });
+        
+        // Call checkAllLoaded to finish
+        checkAllLoaded();
+        
+        // Double ensure any spinners are hidden
+        if (typeof forceHideSpinner === 'function') {
+            forceHideSpinner();
+        }
+        
+        // Force hide any overlays directly
+        const overlay = document.getElementById('loading_overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            overlay.style.cssText += 'display: none !important;';
+        }
+        
+        const spinner = document.getElementById('global-loading-spinner');
+        if (spinner) {
+            spinner.style.display = 'none';
+        }
+    }, 5000); // Emergency timeout after 5 seconds
     
-    // Initialize Monthly Events Chart
-    const monthlyChartCtx = document.getElementById('monthlyChart');
-    if (monthlyChartCtx) {
-        initMonthlyChart();
-    }
+    // Track loading completion for all dashboard components
+    const loadingTasks = {
+        stats: false,
+        categoryChart: false,
+        typeChart: false,
+        monthlyChart: false,
+        requesterChart: false,
+        pendingEvents: document.getElementById('pending-events-container') ? false : true
+    };
     
-    // Initialize Requester Chart
-    const requesterChartCtx = document.getElementById('requesterChart');
-    if (requesterChartCtx) {
-        initRequesterChart();
+    // Function to check if all loading is complete
+    function checkAllLoaded() {
+        const allLoaded = Object.values(loadingTasks).every(item => item === true);
+        if (allLoaded) {
+            // Always force hide spinners to ensure nothing is stuck
+            if (typeof forceHideSpinner === 'function') {
+                forceHideSpinner();
+            } else {
+                hideSpinner();
+                
+                // Double-check immediate spinner hiding
+                const loadingOverlay = document.getElementById('loading_overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+                
+                const globalSpinner = document.getElementById('global-loading-spinner');
+                if (globalSpinner) {
+                    globalSpinner.style.display = 'none';
+                }
+            }
+            
+            console.log('All dashboard components loaded successfully');
+        }
     }
     
     // Load dashboard statistics
-    loadDashboardStats();
+    loadDashboardStats(loadingTasks, checkAllLoaded);
+    
+    // Initialize charts
+    initCategoryChart(loadingTasks, checkAllLoaded);
+    initTypeChart(loadingTasks, checkAllLoaded);
+    initMonthlyChart(loadingTasks, checkAllLoaded);
+    initRequesterChart(loadingTasks, checkAllLoaded);
+    
+    // Load pending events for admins
+    if (document.getElementById('pending-events-container')) {
+        loadPendingEvents(loadingTasks, checkAllLoaded);
+    }
 });
 
-// Load dashboard statistics
-function loadDashboardStats() {
+// Load dashboard statistics with robust error handling
+function loadDashboardStats(loadingTasks, callback) {
     fetch('/api/dashboard/statistics')
-        .then(response => response.json())
-        .then(data => {
-            // Update stat cards
-            document.getElementById('upcoming_events_count').textContent = data.upcoming_events;
-            document.getElementById('online_events_count').textContent = data.online_events;
-            document.getElementById('offline_events_count').textContent = data.offline_events;
-            document.getElementById('total_events_count').textContent = data.total_events;
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
         })
-        .catch(error => console.error('Error loading dashboard statistics:', error));
+        .then(data => {
+            // Update statistics cards
+            document.getElementById('total-events').textContent = data.total_events || '0';
+            document.getElementById('upcoming-events').textContent = data.upcoming_events || '0';
+            document.getElementById('online-events').textContent = data.online_events || '0';
+            document.getElementById('offline-events').textContent = data.offline_events || '0';
+            
+            // Mark task as complete
+            loadingTasks.stats = true;
+            callback();
+        })
+        .catch(error => {
+            console.error('Error loading dashboard statistics:', error);
+            
+            // Provide fallback values on error
+            document.getElementById('total-events').textContent = '0';
+            document.getElementById('upcoming-events').textContent = '0';
+            document.getElementById('online-events').textContent = '0';
+            document.getElementById('offline-events').textContent = '0';
+            
+            // Display error message
+            const statsCards = document.querySelector('.row:first-of-type');
+            if (statsCards) {
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'col-12 mt-2';
+                errorAlert.innerHTML = `
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Could not load statistics data. Please try refreshing the page.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                statsCards.insertAdjacentElement('afterend', errorAlert);
+            }
+            
+            // Mark task as complete even on error
+            loadingTasks.stats = true;
+            callback();
+        });
 }
 
-// Initialize Category Chart
-function initCategoryChart() {
-    fetch('/api/dashboard/categories')
-        .then(response => response.json())
+// Load pending events for admin dashboard
+function loadPendingEvents(loadingTasks, callback) {
+    fetch('/api/dashboard/pending-events')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            const labels = data.map(item => item.name);
-            const counts = data.map(item => item.count);
+            const container = document.getElementById('pending-events-container');
             
-            // Generate colors
-            const backgroundColors = generateColors(data.length);
+            // Clear loading indicator
+            container.innerHTML = '';
             
-            const categoryChart = new Chart(document.getElementById('categoryChart'), {
+            if (!data.events || data.events.length === 0) {
+                container.innerHTML = '<p class="text-center py-4">No pending events found.</p>';
+                
+                // Mark task as complete
+                if (loadingTasks) {
+                    loadingTasks.pendingEvents = true;
+                    callback();
+                }
+                
+                return;
+            }
+            
+            // Create table for pending events
+            const table = document.createElement('div');
+            table.className = 'table-responsive';
+            table.innerHTML = `
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Requester</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-events-body"></tbody>
+                </table>
+            `;
+            
+            container.appendChild(table);
+            
+            const tbody = document.getElementById('pending-events-body');
+            
+            // Add events to table
+            data.events.forEach(event => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td><a href="/events/${event.id}">${event.name || 'Unnamed Event'}</a></td>
+                    <td>${event.requester_name || 'Unknown'}</td>
+                    <td>${formatDateTime(event.start_datetime) || 'No date'}</td>
+                    <td>
+                        <a href="/events/${event.id}" class="btn btn-sm btn-info">View</a>
+                        <a href="/events/${event.id}/approve" class="btn btn-sm btn-success">Approve</a>
+                        <a href="/events/${event.id}/reject" class="btn btn-sm btn-danger">Reject</a>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.pendingEvents = true;
+                callback();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading pending events:', error);
+            const container = document.getElementById('pending-events-container');
+            container.innerHTML = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load pending events. Please try refreshing the page.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.pendingEvents = true;
+                callback();
+            }
+        });
+}
+
+// Initialize category chart
+function initCategoryChart(loadingTasks, callback) {
+    fetch('/api/dashboard/categories')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const ctx = document.getElementById('categoriesChart');
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.categoryChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle empty data
+            if (!data.labels || !data.values || data.labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No category data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.categoryChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle different data formats
+            let labels = [];
+            let values = [];
+            
+            // If data is an array of objects with name/count properties
+            if (Array.isArray(data)) {
+                labels = data.map(item => item.name);
+                values = data.map(item => item.count);
+            }
+            // If data already has labels/values format
+            else if (data.labels && Array.isArray(data.labels)) {
+                labels = data.labels;
+                values = data.values;
+            }
+            
+            const colors = generateColors(labels.length);
+            
+            new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
-                        data: counts,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 1
+                        data: values,
+                        backgroundColor: colors,
+                        hoverOffset: 4
                     }]
                 },
                 options: {
@@ -70,211 +295,338 @@ function initCategoryChart() {
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Events by Category',
-                            font: {
-                                size: 16
-                            }
                         }
                     }
                 }
             });
-        })
-        .catch(error => console.error('Error loading category data:', error));
-}
-
-// Initialize Event Type Distribution Chart
-function initTypeChart() {
-    const typeChart = new Chart(document.getElementById('typeChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Online', 'Offline'],
-            datasets: [{
-                label: 'Events by Type',
-                data: [
-                    document.getElementById('online_events_count').textContent,
-                    document.getElementById('offline_events_count').textContent
-                ],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)'
-                ],
-                borderColor: [
-                    'rgb(255, 99, 132)',
-                    'rgb(54, 162, 235)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: {
-                legend: {
-                    display: false
-                },
-                title: {
-                    display: true,
-                    text: 'Event Types Distribution',
-                    font: {
-                        size: 16
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Events'
-                    }
-                }
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.categoryChart = true;
+                callback();
             }
-        }
-    });
+        })
+        .catch(error => {
+            console.error('Error loading category chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('categoriesChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load category data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.categoryChart = true;
+                callback();
+            }
+        });
 }
 
-// Initialize Monthly Events Chart
-function initMonthlyChart() {
-    fetch('/api/dashboard/monthly-events')
-        .then(response => response.json())
+// Initialize event type chart
+function initTypeChart(loadingTasks, callback) {
+    // Use the API with correct endpoint names
+    fetch('/api/dashboard/event-types')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            const monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+            const ctx = document.getElementById('typesChart');
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.typeChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle different data formats
+            let labels = [];
+            let values = [];
+            
+            // If data is an array of objects with name/count properties
+            if (Array.isArray(data)) {
+                labels = data.map(item => item.name);
+                values = data.map(item => item.count);
+            }
+            // If data already has labels/values format
+            else if (data.labels && Array.isArray(data.labels)) {
+                labels = data.labels;
+                values = data.values;
+            }
+            
+            // Handle empty data
+            if (labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No event type data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.typeChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            const colors = generateColors(labels.length);
+            
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.typeChart = true;
+                callback();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading type chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('typesChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load event type data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.typeChart = true;
+                callback();
+            }
+        });
+}
+
+// Initialize monthly events chart
+function initMonthlyChart(loadingTasks, callback) {
+    fetch('/api/dashboard/monthly')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const ctx = document.getElementById('monthlyChart');
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.monthlyChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            // Handle empty data
+            if (!data.labels || !data.values || data.labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No monthly event data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.monthlyChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: data.labels,
                     datasets: [{
-                        label: 'Events per Month',
-                        data: data.data,
-                        backgroundColor: 'rgba(15, 110, 132, 0.8)',
-                        borderColor: 'rgb(15, 110, 132)',
+                        label: 'Number of Events',
+                        data: data.values,
+                        backgroundColor: 'rgba(78, 115, 223, 0.7)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Monthly Event Volume (Last 12 Months)',
-                            font: {
-                                size: 16
-                            }
-                        }
-                    },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Number of Events'
-                            },
                             ticks: {
-                                stepSize: 1
+                                precision: 0
                             }
                         }
                     }
                 }
             });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.monthlyChart = true;
+                callback();
+            }
         })
-        .catch(error => console.error('Error loading monthly data:', error));
+        .catch(error => {
+            console.error('Error loading monthly chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('monthlyChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load monthly event data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.monthlyChart = true;
+                callback();
+            }
+        });
 }
 
-// Initialize Requester Chart
-function initRequesterChart() {
-    fetch('/api/dashboard/events-by-requester')
-        .then(response => response.json())
+// Initialize requester chart
+function initRequesterChart(loadingTasks, callback) {
+    fetch('/api/dashboard/requesters')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            const labels = data.map(item => item.name);
-            const counts = data.map(item => item.count);
+            const ctx = document.getElementById('requesterChart');
+            if (!ctx) {
+                if (loadingTasks) {
+                    loadingTasks.requesterChart = true;
+                    callback();
+                }
+                return;
+            }
             
-            const requesterChart = new Chart(document.getElementById('requesterChart'), {
-                type: 'bar',
+            // Handle empty data
+            if (!data.labels || !data.values || data.labels.length === 0) {
+                ctx.parentNode.innerHTML = '<div class="text-center py-5"><em>No requester data available</em></div>';
+                
+                if (loadingTasks) {
+                    loadingTasks.requesterChart = true;
+                    callback();
+                }
+                return;
+            }
+            
+            const colors = generateColors(data.labels.length);
+            
+            new Chart(ctx, {
+                type: 'polarArea',
                 data: {
-                    labels: labels,
+                    labels: data.labels,
                     datasets: [{
-                        axis: 'y',
-                        label: 'Events Created',
-                        data: counts,
-                        backgroundColor: [
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 206, 86, 0.8)',
-                            'rgba(255, 99, 132, 0.8)',
-                            'rgba(75, 192, 192, 0.8)',
-                            'rgba(153, 102, 255, 0.8)'
-                        ],
-                        borderWidth: 1
+                        data: data.values,
+                        backgroundColor: colors
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    indexAxis: 'y',
                     plugins: {
                         legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Events by Requester',
-                            font: {
-                                size: 16
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Number of Events'
-                            }
+                            position: 'bottom',
                         }
                     }
                 }
             });
+            
+            // Mark task as complete
+            if (loadingTasks) {
+                loadingTasks.requesterChart = true;
+                callback();
+            }
         })
-        .catch(error => console.error('Error loading requester data:', error));
+        .catch(error => {
+            console.error('Error loading requester chart:', error);
+            
+            // Display error in chart container
+            const ctx = document.getElementById('requesterChart');
+            if (ctx && ctx.parentNode) {
+                ctx.parentNode.innerHTML = `
+                    <div class="alert alert-warning m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load requester data.
+                    </div>
+                `;
+            }
+            
+            // Mark task as complete even on error
+            if (loadingTasks) {
+                loadingTasks.requesterChart = true;
+                callback();
+            }
+        });
 }
 
-// Helper function to generate random colors for charts
+// Generate colors for charts
 function generateColors(count) {
-    const colors = [
-        'rgba(255, 99, 132, 0.8)',
-        'rgba(54, 162, 235, 0.8)',
-        'rgba(255, 206, 86, 0.8)',
-        'rgba(75, 192, 192, 0.8)',
-        'rgba(153, 102, 255, 0.8)',
-        'rgba(255, 159, 64, 0.8)',
-        'rgba(199, 199, 199, 0.8)',
-        'rgba(83, 102, 255, 0.8)',
-        'rgba(78, 205, 196, 0.8)',
-        'rgba(255, 99, 255, 0.8)',
-        'rgba(107, 91, 149, 0.8)',
-        'rgba(66, 133, 244, 0.8)'
+    const colorPalette = [
+        'rgba(78, 115, 223, 0.7)',
+        'rgba(28, 200, 138, 0.7)',
+        'rgba(54, 185, 204, 0.7)',
+        'rgba(246, 194, 62, 0.7)',
+        'rgba(231, 74, 59, 0.7)',
+        'rgba(133, 135, 150, 0.7)',
+        'rgba(105, 105, 105, 0.7)',
+        'rgba(255, 159, 64, 0.7)'
     ];
     
-    // If we need more colors than provided, generate them
-    if (count > colors.length) {
-        for (let i = colors.length; i < count; i++) {
+    // If we need more colors than in the palette, generate them
+    if (count > colorPalette.length) {
+        const additionalColors = [];
+        for (let i = 0; i < count - colorPalette.length; i++) {
             const r = Math.floor(Math.random() * 255);
             const g = Math.floor(Math.random() * 255);
             const b = Math.floor(Math.random() * 255);
-            colors.push(`rgba(${r}, ${g}, ${b}, 0.8)`);
+            additionalColors.push(`rgba(${r}, ${g}, ${b}, 0.7)`);
         }
+        return [...colorPalette, ...additionalColors];
     }
     
-    return colors.slice(0, count);
+    return colorPalette.slice(0, count);
+}
+
+// Format date and time
+function formatDateTime(dateTimeStr) {
+    if (!dateTimeStr) return '';
+    
+    const date = new Date(dateTimeStr);
+    return date.toLocaleString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
