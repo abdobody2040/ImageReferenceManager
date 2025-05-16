@@ -1,29 +1,23 @@
 
-// Unified loading overlay fix
-(function() {
-    function hideLoadingElements() {
-        const elements = document.querySelectorAll('.loading-overlay, #loading-overlay, #loading_overlay, .spinner-container, .loading-indicator, .loader, .spinner');
-        elements.forEach(el => {
-            if (el) {
-                el.style.display = 'none';
-                el.remove();
+document.addEventListener('DOMContentLoaded', function() {
+    // Hide all loading overlays
+    const hideLoadingOverlays = () => {
+        const overlays = document.querySelectorAll('.loading-overlay, #loading_overlay');
+        overlays.forEach(overlay => {
+            if (overlay) {
+                overlay.style.display = 'none';
+                overlay.style.visibility = 'hidden';
             }
         });
-        
-        // Reset counters
-        window.spinnerCounter = 0;
-        window.loadingCounter = 0;
-        
-        // Clear timeouts
-        if (window.spinnerTimeout) clearTimeout(window.spinnerTimeout);
-        if (window.loadingTimeout) clearTimeout(window.loadingTimeout);
-    }
-    
-    // Run immediately and periodically
-    hideLoadingElements();
-    setInterval(hideLoadingElements, 1000);
-    
-    // Run on DOM ready
-    document.addEventListener('DOMContentLoaded', hideLoadingElements);
-    window.addEventListener('load', hideLoadingElements);
-})();
+    };
+
+    // Initial hide
+    hideLoadingOverlays();
+
+    // Observer for dynamically added elements
+    const observer = new MutationObserver(hideLoadingOverlays);
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});

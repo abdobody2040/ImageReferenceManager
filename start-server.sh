@@ -13,6 +13,9 @@ echo "Setting up upload directories..."
 mkdir -p public/static/uploads/events
 chmod -R 755 public/static/uploads
 
+# Clear any stale temporary files
+rm -f /tmp/php* 2>/dev/null
+
 # Start the PHP server
 echo "Starting PHP server on port 5000..."
 php -S 0.0.0.0:5000 index.php
