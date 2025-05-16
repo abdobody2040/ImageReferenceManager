@@ -13,7 +13,7 @@ if (getenv('DATABASE_URL')) {
     $db_name = ltrim($db_url['path'] ?? '', '/');
     $db_user = $db_url['user'] ?? '';
     $db_pass = $db_url['pass'] ?? '';
-    
+
     // Determine if PostgreSQL or MySQL
     $db_type = (strpos(getenv('DATABASE_URL'), 'postgres') !== false) ? 'pgsql' : 'mysql';
 } else {
@@ -31,15 +31,18 @@ $dsn = "$db_type:host=$db_host;port=$db_port;dbname=$db_name";
 
 try {
     // Create PDO instance
-    $pdo = new PDO($dsn, $db_user, $db_pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    $pdo = new PDO(
+        "pgsql:host=$db_host;port=$db_port;dbname=$db_name;sslmode=require", 
+        $db_user, 
+        $db_pass, 
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
-    
+        PDO::ATTR_EMULATE_PREPARES => false]
+    );
+
     // Set application-specific options
     $pdo->exec("SET TIME ZONE 'UTC'");
-    
+
 } catch (PDOException $e) {
     // Log error and display generic message
     error_log('Database connection error: ' . $e->getMessage());
