@@ -1,51 +1,44 @@
 <?php
-// API endpoint for events by category chart
+/**
+ * API endpoint for category chart data
+ */
 
-// Set content type to JSON
-header('Content-Type: application/json');
+// Require authentication
+requireAuth();
+
+// Initialize response arrays
+$labels = [];
+$values = [];
 
 try {
-    // Get events by category
-    $stmt = $pdo->prepare("
-        SELECT ec.name, COUNT(ecj.event_id) as count
-        FROM event_category ec
-        LEFT JOIN event_category_junction ecj ON ec.id = ecj.category_id
-        LEFT JOIN event e ON ecj.event_id = e.id
-        WHERE e.id IS NULL OR (
-            e.id IS NOT NULL
-            AND (e.status = 'approved' OR e.user_id = ? OR ? = TRUE)
-        )
-        GROUP BY ec.name
-        ORDER BY count DESC
-    ");
-    
-    $stmt->execute([$_SESSION['user_id'], isAdmin()]);
-    $categories = $stmt->fetchAll();
-    
-    // Format data for Chart.js
-    $labels = [];
-    $values = [];
-    
+    // Get categories
+    $categories_stmt = $pdo->query("SELECT id, name FROM event_category");
+    $categories = $categories_stmt->fetchAll();
+
+    // For each category, count associated events
     foreach ($categories as $category) {
-        $labels[] = $category['name'];
-        $values[] = (int)$category['count'];
+        $count_stmt = $pdo->prepare("
+            SELECT COUNT(*) as count 
+            FROM event_categories 
+            WHERE category_id = ?
+        ");
+        $count_stmt->execute([$category['id']]);
+        $count = $count_stmt->fetchColumn();
+
+        // Only include categories with events
+        if ($count > 0) {
+            $labels[] = $category['name'];
+            $values[] = $count;
+        }
     }
-    
-    // Return as JSON
-    echo json_encode([
-        'labels' => $labels,
-        'values' => $values
-    ]);
-    
-} catch (PDOException $e) {
-    // Log error
-    error_log('Error getting category data: ' . $e->getMessage());
-    
-    // Return error
-    echo json_encode([
-        'error' => 'Database error',
-        'labels' => [],
-        'values' => []
-    ]);
+} catch (Exception $e) {
+    error_log("Error fetching category data: " . $e->getMessage());
 }
+
+// Return data in format expected by Chart.js
+header('Content-Type: application/json');
+echo json_encode([
+    'labels' => $labels,
+    'values' => $values
+]);
 ?>
