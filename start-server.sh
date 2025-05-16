@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Cleanup: Kill any existing PHP servers
@@ -14,4 +15,4 @@ chmod -R 755 public/static/uploads
 
 # Start the PHP server
 echo "Starting PHP server on port 5000..."
-php -S 0.0.0.0:5000 -t . index.php
+php -S 0.0.0.0:5000 index.php
