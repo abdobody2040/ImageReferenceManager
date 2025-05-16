@@ -1,13 +1,12 @@
 RewriteEngine On
-
-# Handle URLs without file extension
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
-# PHP settings
+# Enable error handling
 php_flag display_errors on
 php_value error_reporting E_ALL
+
 php_value upload_max_filesize 10M
 php_value post_max_size 12M
 php_value session.gc_maxlifetime 1440

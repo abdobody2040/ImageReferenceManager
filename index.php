@@ -10,25 +10,23 @@ session_start();
 // Include configuration files
 require_once 'config/database.php';
 require_once 'config/functions.php';
-require_once 'config/error_handler.php';
 
-// Define routes and their corresponding files
+// Get the request path
+$request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$request_path = trim($request_path, '/');
+
+// Route mapping
 $routes = [
-    // Public routes
-    '/' => 'routes/home.php',
-    '/login' => 'routes/auth/login.php',
+    '' => 'routes/home.php',
+    'login' => 'routes/auth/login.php',
+    'dashboard' => 'routes/dashboard.php',
+    'events' => 'routes/events/index.php',
+    'profile' => 'routes/profile.php',
     '/logout' => 'routes/auth/logout.php',
     '/forgot-password' => 'routes/auth/forgot_password.php',
-    
-    // Protected routes (authenticated users)
-    '/dashboard' => 'routes/dashboard.php',
-    '/events' => 'routes/events/index.php',
     '/events/create' => 'routes/events/create.php',
     '/events/export' => 'routes/events/export.php',
-    '/profile' => 'routes/profile.php',
     '/profile/change-password' => 'routes/profile/change_password.php',
-    
-    // Admin routes
     '/settings' => 'routes/admin/settings.php',
     '/settings/update' => 'routes/admin/update_settings.php',
     '/settings/update-logo' => 'routes/admin/update_logo.php',
@@ -38,8 +36,6 @@ $routes = [
     '/settings/categories/delete' => 'routes/admin/delete_category.php',
     '/settings/users/add' => 'routes/admin/add_user.php',
     '/settings/users/delete' => 'routes/admin/delete_user.php',
-    
-    // API routes
     '/api/dashboard/statistics' => 'routes/api/dashboard_statistics.php',
     '/api/dashboard/pending-events' => 'routes/api/dashboard_pending_events.php',
     '/api/dashboard/categories' => 'routes/api/dashboard_categories.php',
@@ -55,47 +51,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_SERVER['REQUEST_URI'] === '/login
     exit;
 }
 
-// Get the requested URL path
-$request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
 // Handle dynamic routes (those with parameters)
-if (preg_match('#^/events/(\d+)$#', $request_uri, $matches)) {
+if (preg_match('#^/events/(\d+)$#', $request_path, $matches)) {
     $event_id = $matches[1];
     $_GET['id'] = $event_id;
     require_once 'routes/events/show.php';
     exit;
 }
 
-if (preg_match('#^/events/(\d+)/edit$#', $request_uri, $matches)) {
+if (preg_match('#^/events/(\d+)/edit$#', $request_path, $matches)) {
     $event_id = $matches[1];
     $_GET['id'] = $event_id;
     require_once 'routes/events/edit.php';
     exit;
 }
 
-if (preg_match('#^/events/(\d+)/delete$#', $request_uri, $matches)) {
+if (preg_match('#^/events/(\d+)/delete$#', $request_path, $matches)) {
     $event_id = $matches[1];
     $_GET['id'] = $event_id;
     require_once 'routes/events/delete.php';
     exit;
 }
 
-if (preg_match('#^/events/(\d+)/approve$#', $request_uri, $matches)) {
+if (preg_match('#^/events/(\d+)/approve$#', $request_path, $matches)) {
     $event_id = $matches[1];
     $_GET['id'] = $event_id;
     require_once 'routes/events/approve.php';
     exit;
 }
 
-if (preg_match('#^/events/(\d+)/reject$#', $request_uri, $matches)) {
+if (preg_match('#^/events/(\d+)/reject$#', $request_path, $matches)) {
     $event_id = $matches[1];
     $_GET['id'] = $event_id;
     require_once 'routes/events/reject.php';
     exit;
 }
 
-// Check if the requested route exists
-if (isset($routes[$request_uri])) {
+require_once 'config/error_handler.php';
+
+// Check if route exists
+if (isset($routes[$request_path])) {
     // Define authentication requirements for routes
     $auth_required = [
         '/dashboard',
@@ -119,19 +114,19 @@ if (isset($routes[$request_uri])) {
     ];
     
     // Check authentication requirements
-    if (in_array($request_uri, $auth_required)) {
+    if (in_array($request_path, $auth_required)) {
         requireAuth();
     }
     
-    if (in_array($request_uri, $admin_required)) {
+    if (in_array($request_path, $admin_required)) {
         requireAdmin();
     }
     
     // Include the appropriate route file
-    require_once $routes[$request_uri];
+    require_once $routes[$request_path];
 } else {
     // Route not found - show 404 page
-    header('HTTP/1.0 404 Not Found');
+    http_response_code(404);
     include 'views/errors/404.php';
 }
 ?>
