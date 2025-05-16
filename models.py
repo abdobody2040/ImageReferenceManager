@@ -105,7 +105,6 @@ class Event(db.Model):
     employee_code_id = db.Column(db.Integer, db.ForeignKey('employee_code.id'), nullable=True)
     event_type_id = db.Column(db.Integer, db.ForeignKey('event_type.id'), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    attendees_file = db.Column(db.String(255), nullable=False)  # Store filename of uploaded attendees list
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'approved', 'rejected'

@@ -311,21 +311,6 @@ def create_event():
             if category:
                 event.categories.append(category)
         
-        # Handle attendees list upload
-        if 'attendees_list' not in request.files:
-            flash('Attendees list is required', 'danger')
-            return redirect(url_for('create_event'))
-            
-        attendees_file = request.files['attendees_list']
-        if not attendees_file.filename:
-            flash('Attendees list is required', 'danger')
-            return redirect(url_for('create_event'))
-            
-        # Save attendees file
-        attendees_filename = secure_filename(f"attendees_{uuid.uuid4()}_{attendees_file.filename}")
-        attendees_file.save(os.path.join(app.config['UPLOAD_FOLDER'], attendees_filename))
-        event.attendees_file = attendees_filename
-
         # Handle image upload
         image_url = request.form.get('image_url')
         if image_url:
@@ -453,20 +438,6 @@ def edit_event(event_id):
             if category:
                 event.categories.append(category)
         
-        # Handle attendees list update
-        if 'attendees_list' in request.files and request.files['attendees_list'].filename:
-            # Remove old file if it exists
-            if event.attendees_file:
-                old_file_path = os.path.join(app.config['UPLOAD_FOLDER'], event.attendees_file)
-                if os.path.exists(old_file_path):
-                    os.remove(old_file_path)
-            
-            # Save new file
-            attendees_file = request.files['attendees_list']
-            attendees_filename = secure_filename(f"attendees_{uuid.uuid4()}_{attendees_file.filename}")
-            attendees_file.save(os.path.join(app.config['UPLOAD_FOLDER'], attendees_filename))
-            event.attendees_file = attendees_filename
-
         # Handle image update
         image_url = request.form.get('image_url')
         if image_url:

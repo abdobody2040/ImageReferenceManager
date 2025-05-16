@@ -241,13 +241,6 @@ function validateEventForm() {
         }
     }
 
-    // Check attendees list
-    const attendeesList = document.getElementById('attendees_list');
-    if (attendeesList && (!attendeesList.files || attendeesList.files.length === 0)) {
-        addErrorMessage(attendeesList, 'Please upload an attendees list');
-        isValid = false;
-    }
-
     // Check if at least one category is selected
     const categories = document.getElementById('categories');
     if (categories && (!categories.value || categories.value.length === 0)) {
