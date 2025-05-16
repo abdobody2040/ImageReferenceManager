@@ -1,45 +1,78 @@
 <?php
-/**
- * API endpoint for monthly events chart data
- */
+// API endpoint for monthly events chart
 
-// Require authentication
-requireAuth();
-
-// Initialize response arrays
-$labels = [];
-$values = [];
+// Set content type to JSON
+header('Content-Type: application/json');
 
 try {
-    // Get monthly count for the past 12 months
-    $sql = "
-        SELECT 
-            TO_CHAR(date_trunc('month', start_datetime), 'Mon YYYY') as month_label,
-            COUNT(*) as event_count 
-        FROM 
-            event 
-        WHERE 
-            start_datetime >= NOW() - INTERVAL '12 months'
-        GROUP BY 
-            date_trunc('month', start_datetime)
-        ORDER BY 
-            date_trunc('month', start_datetime) ASC";
+    // Get current year and month
+    $current_year = date('Y');
+    $current_month = date('m');
     
-    $stmt = $pdo->query($sql);
-    $monthly_data = $stmt->fetchAll();
+    // Generate months for the past year
+    $labels = [];
+    $months = [];
     
-    foreach ($monthly_data as $row) {
-        $labels[] = $row['month_label'];
-        $values[] = (int)$row['event_count'];
+    for ($i = 0; $i < 12; $i++) {
+        $month = (int)$current_month - $i;
+        $year = (int)$current_year;
+        
+        if ($month <= 0) {
+            $month += 12;
+            $year -= 1;
+        }
+        
+        $date = new DateTime("$year-$month-01");
+        $labels[] = $date->format('M Y');
+        $months[] = [
+            'year' => $year,
+            'month' => $month,
+            'start' => "$year-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01",
+            'end' => "$year-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-" . date('t', $date->getTimestamp())
+        ];
     }
+    
+    // Reverse arrays to show oldest to newest
+    $labels = array_reverse($labels);
+    $months = array_reverse($months);
+    
+    // Query for events count by month
+    $values = [];
+    
+    foreach ($months as $month) {
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as count
+            FROM event
+            WHERE start_datetime BETWEEN ? AND ?
+            AND (status = 'approved' OR user_id = ? OR ? = TRUE)
+        ");
+        
+        $stmt->execute([
+            $month['start'] . ' 00:00:00',
+            $month['end'] . ' 23:59:59',
+            $_SESSION['user_id'],
+            isAdmin()
+        ]);
+        
+        $result = $stmt->fetch();
+        $values[] = (int)$result['count'];
+    }
+    
+    // Return as JSON
+    echo json_encode([
+        'labels' => $labels,
+        'values' => $values
+    ]);
+    
 } catch (Exception $e) {
-    error_log("Error fetching monthly event data: " . $e->getMessage());
+    // Log error
+    error_log('Error getting monthly data: ' . $e->getMessage());
+    
+    // Return error
+    echo json_encode([
+        'error' => 'Error: ' . $e->getMessage(),
+        'labels' => [],
+        'values' => []
+    ]);
 }
-
-// Return data in format expected by Chart.js
-header('Content-Type: application/json');
-echo json_encode([
-    'labels' => $labels,
-    'values' => $values
-]);
 ?>

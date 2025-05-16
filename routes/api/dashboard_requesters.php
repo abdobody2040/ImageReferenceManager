@@ -1,46 +1,47 @@
 <?php
-/**
- * API endpoint for top requesters chart data
- */
+// API endpoint for top requesters chart
 
-// Require authentication
-requireAuth();
-
-// Initialize response arrays
-$labels = [];
-$values = [];
+// Set content type to JSON
+header('Content-Type: application/json');
 
 try {
-    // Get top 5 requesters by event count
-    $sql = "
-        SELECT 
-            requester_name,
-            COUNT(*) as event_count
-        FROM 
-            event
-        GROUP BY 
-            requester_name
-        ORDER BY 
-            event_count DESC
-        LIMIT 5";
+    // Get top requesters (limit to top 5)
+    $stmt = $pdo->prepare("
+        SELECT requester_name, COUNT(*) as count
+        FROM event
+        WHERE status = 'approved' OR user_id = ? OR ? = TRUE
+        GROUP BY requester_name
+        ORDER BY count DESC
+        LIMIT 5
+    ");
     
-    $stmt = $pdo->query($sql);
+    $stmt->execute([$_SESSION['user_id'], isAdmin()]);
     $requesters = $stmt->fetchAll();
     
-    foreach ($requesters as $row) {
-        if (!empty($row['requester_name'])) {
-            $labels[] = $row['requester_name'];
-            $values[] = (int)$row['event_count'];
-        }
+    // Format data for Chart.js
+    $labels = [];
+    $values = [];
+    
+    foreach ($requesters as $requester) {
+        $labels[] = $requester['requester_name'];
+        $values[] = (int)$requester['count'];
     }
-} catch (Exception $e) {
-    error_log("Error fetching requester data: " . $e->getMessage());
+    
+    // Return as JSON
+    echo json_encode([
+        'labels' => $labels,
+        'values' => $values
+    ]);
+    
+} catch (PDOException $e) {
+    // Log error
+    error_log('Error getting requester data: ' . $e->getMessage());
+    
+    // Return error
+    echo json_encode([
+        'error' => 'Database error',
+        'labels' => [],
+        'values' => []
+    ]);
 }
-
-// Return data in format expected by Chart.js
-header('Content-Type: application/json');
-echo json_encode([
-    'labels' => $labels,
-    'values' => $values
-]);
 ?>

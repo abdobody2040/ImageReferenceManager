@@ -1,4 +1,4 @@
-modules = ["python-3.11", "php-8.1", "postgresql-16"]
+modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
@@ -6,10 +6,10 @@ packages = ["openssl", "postgresql", "php"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "php -S 0.0.0.0:5000 index.php"]
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "PHP Server"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -28,15 +28,6 @@ author = "agent"
 task = "shell.exec"
 args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "PHP Server"
-author = 41935773
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash start-server.sh"
 
 [[ports]]
 localPort = 5000
