@@ -21,14 +21,18 @@ ob_start();
                                     <p class="text-muted">Welcome back! Please log in to continue.</p>
                                 </div>
                                 
-                                <form class="user" action="/login" method="post">
+                                <!-- Enhanced login form with better error handling -->
+                                <form class="user" action="/login" method="post" id="login_form">
                                     <div class="form-group mb-3">
                                         <input type="email" class="form-control form-control-user" id="email" name="email" 
-                                            placeholder="Enter Email Address..." required>
+                                            placeholder="Enter Email Address..." required
+                                            value="<?php echo isset($_SESSION['form_email']) ? htmlspecialchars($_SESSION['form_email']) : ''; ?>">
+                                        <div class="invalid-feedback">Please enter a valid email address</div>
                                     </div>
                                     <div class="form-group mb-3">
                                         <input type="password" class="form-control form-control-user" id="password" name="password" 
                                             placeholder="Password" required>
+                                        <div class="invalid-feedback">Password is required</div>
                                     </div>
                                     <div class="form-group mb-3">
                                         <div class="form-check">
@@ -38,10 +42,63 @@ ob_start();
                                             </label>
                                         </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary btn-user btn-block">
+                                    <div class="loading-overlay" style="display: none;">
+                                        <div class="spinner-border text-light" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-user btn-block" id="login_button">
                                         Login
                                     </button>
                                 </form>
+                                
+                                <!-- Login form validation script -->
+                                <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const form = document.getElementById('login_form');
+                                    const loginButton = document.getElementById('login_button');
+                                    
+                                    if (form) {
+                                        form.addEventListener('submit', function(e) {
+                                            // Basic validation
+                                            let isValid = true;
+                                            const email = document.getElementById('email');
+                                            const password = document.getElementById('password');
+                                            
+                                            // Reset validation state
+                                            email.classList.remove('is-invalid');
+                                            password.classList.remove('is-invalid');
+                                            
+                                            // Validate email
+                                            if (!email.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+                                                email.classList.add('is-invalid');
+                                                isValid = false;
+                                            }
+                                            
+                                            // Validate password
+                                            if (!password.value.trim()) {
+                                                password.classList.add('is-invalid');
+                                                isValid = false;
+                                            }
+                                            
+                                            if (!isValid) {
+                                                e.preventDefault();
+                                                return false;
+                                            }
+                                            
+                                            // Show loading overlay
+                                            const loadingOverlay = document.querySelector('.loading-overlay');
+                                            if (loadingOverlay) {
+                                                loadingOverlay.style.display = 'flex';
+                                            }
+                                            
+                                            // Disable button
+                                            loginButton.disabled = true;
+                                            loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Signing in...';
+                                        });
+                                    }
+                                });
+                                </script>
                                 
                                 <hr>
                                 <div class="text-center">

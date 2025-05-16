@@ -70,20 +70,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = "Invalid image type. Allowed types: JPG, PNG, GIF, WEBP.";
             } else {
                 // Create upload directory if it doesn't exist
-                $upload_dir = 'uploads/events/';
-                if (!is_dir($upload_dir)) {
+                $upload_dir = 'public/static/uploads/events/';
+                if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0755, true);
                 }
+                
+                // Ensure upload directory has proper permissions
+                chmod($upload_dir, 0755);
                 
                 // Generate unique filename
                 $filename = uniqid() . '_' . basename($_FILES['image_file']['name']);
                 $upload_path = $upload_dir . $filename;
                 
-                // Move uploaded file
-                if (move_uploaded_file($_FILES['image_file']['tmp_name'], $upload_path)) {
-                    $image_file = '/' . $upload_path;
+                // Check if upload directory is writable
+                if (!is_writable($upload_dir)) {
+                    error_log("Upload directory is not writable: $upload_dir");
+                    $errors[] = "Upload directory is not writable. Please contact an administrator.";
                 } else {
-                    $errors[] = "Failed to move uploaded file.";
+                    // Move uploaded file
+                    if (move_uploaded_file($_FILES['image_file']['tmp_name'], $upload_path)) {
+                        $image_file = '/' . $upload_path;
+                        // Set correct permissions for the file
+                        chmod($upload_path, 0644);
+                    } else {
+                        $upload_error = error_get_last();
+                        error_log("Failed to move uploaded file: " . json_encode($upload_error));
+                        $errors[] = "Failed to move uploaded file. Error: " . ($_FILES['image_file']['error'] ?? 'Unknown error');
+                    }
                 }
             }
         }

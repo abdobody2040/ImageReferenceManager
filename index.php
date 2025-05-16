@@ -4,8 +4,18 @@
  * Main Router
  */
 
-// Start session
-session_start();
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    // Set secure session parameters
+    $session_options = [
+        'cookie_httponly' => true,     // Prevent JavaScript access to session cookie
+        'cookie_secure' => isset($_SERVER['HTTPS']), // Secure flag when using HTTPS
+        'cookie_samesite' => 'Lax',    // Prevent CSRF attacks
+        'use_strict_mode' => true,     // Help mitigate session fixation
+        'gc_maxlifetime' => 3600       // Session timeout (1 hour)
+    ];
+    session_start($session_options);
+}
 
 // Include configuration files
 require_once 'config/database.php';

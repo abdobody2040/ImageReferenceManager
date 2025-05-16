@@ -38,81 +38,130 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (form && submitButton) {
         // Listen for form submission
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', async function(event) {
             event.preventDefault();
             
-            // Basic validation
-            const description = document.getElementById('description').value.trim();
-            const requesterName = document.getElementById('requester_name').value.trim();
-            const startDate = document.getElementById('start_date').value;
-            const startTime = document.getElementById('start_time').value;
-            const endDate = document.getElementById('end_date').value;
-            const endTime = document.getElementById('end_time').value;
-            const deadlineDate = document.getElementById('deadline_date').value;
-            const deadlineTime = document.getElementById('deadline_time').value;
-            
-            // Check required fields
-            if (!startDate || !startTime || !endDate || !endTime || !deadlineDate || !deadlineTime) {
-                alert('All date and time fields are required');
-                return false;
-            }
-
-            if (!requesterName || requesterName.length < 4) {
-                alert('Requester name must be at least 4 characters long');
-                return false;
-            }
-
-            if (!description) {
-                alert('Event description is required');
-                return false;
-            }
-
-            // Validate dates - convert to ISO format to ensure proper parsing
             try {
-                const startDateTime = new Date(`${startDate}T${startTime}:00`);
-                const endDateTime = new Date(`${endDate}T${endTime}:00`);
-                const deadlineDateTime = new Date(`${deadlineDate}T${deadlineTime}:00`);
-                const now = new Date();
-
-                // Check if dates are valid
-                if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime()) || isNaN(deadlineDateTime.getTime())) {
-                    alert('Invalid date or time format. Please use the date/time selectors.');
+                // Basic validation
+                const description = document.getElementById('description').value.trim();
+                const requesterName = document.getElementById('requester_name').value.trim();
+                const startDate = document.getElementById('start_date').value;
+                const startTime = document.getElementById('start_time').value;
+                const endDate = document.getElementById('end_date').value;
+                const endTime = document.getElementById('end_time').value;
+                const deadlineDate = document.getElementById('deadline_date').value;
+                const deadlineTime = document.getElementById('deadline_time').value;
+                
+                // Check required fields
+                if (!startDate || !startTime || !endDate || !endTime || !deadlineDate || !deadlineTime) {
+                    alert('All date and time fields are required');
                     return false;
                 }
 
-                // Validation checks
-                if (startDateTime < now) {
-                    alert('Start date cannot be in the past');
+                if (!requesterName || requesterName.length < 4) {
+                    alert('Requester name must be at least 4 characters long');
                     return false;
                 }
 
-                if (endDateTime < startDateTime) {
-                    alert('End date must be after or equal to start date');
+                if (!description) {
+                    alert('Event description is required');
                     return false;
                 }
 
-                if (deadlineDateTime >= startDateTime) {
-                    alert('Registration deadline must be before the event start date');
+                // Validate dates - convert to ISO format to ensure proper parsing
+                try {
+                    const startDateTime = new Date(`${startDate}T${startTime}:00`);
+                    const endDateTime = new Date(`${endDate}T${endTime}:00`);
+                    const deadlineDateTime = new Date(`${deadlineDate}T${deadlineTime}:00`);
+                    const now = new Date();
+
+                    // Check if dates are valid
+                    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime()) || isNaN(deadlineDateTime.getTime())) {
+                        alert('Invalid date or time format. Please use the date/time selectors.');
+                        return false;
+                    }
+
+                    // Validation checks
+                    if (startDateTime < now) {
+                        alert('Start date cannot be in the past');
+                        return false;
+                    }
+
+                    if (endDateTime < startDateTime) {
+                        alert('End date must be after or equal to start date');
+                        return false;
+                    }
+
+                    if (deadlineDateTime >= startDateTime) {
+                        alert('Registration deadline must be before the event start date');
+                        return false;
+                    }
+                } catch (e) {
+                    console.error('Date validation error:', e);
+                    alert('There was a problem with the date format. Please ensure all dates are correctly formatted.');
                     return false;
                 }
-            } catch (e) {
-                console.error('Date validation error:', e);
-                alert('There was a problem with the date format. Please ensure all dates are correctly formatted.');
-                return false;
+
+                // Show loading overlay with more reliable method
+                const loadingOverlay = document.querySelector('.loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'flex';
+                    console.log('Loading overlay displayed');
+                } else {
+                    // Create loading overlay if it doesn't exist
+                    const newOverlay = document.createElement('div');
+                    newOverlay.className = 'loading-overlay';
+                    newOverlay.style.display = 'flex';
+                    newOverlay.style.position = 'fixed';
+                    newOverlay.style.top = '0';
+                    newOverlay.style.left = '0';
+                    newOverlay.style.width = '100%';
+                    newOverlay.style.height = '100%';
+                    newOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                    newOverlay.style.zIndex = '9999';
+                    newOverlay.style.justifyContent = 'center';
+                    newOverlay.style.alignItems = 'center';
+                    
+                    const spinner = document.createElement('div');
+                    spinner.className = 'spinner-border text-light';
+                    spinner.setAttribute('role', 'status');
+                    
+                    const span = document.createElement('span');
+                    span.className = 'visually-hidden';
+                    span.textContent = 'Loading...';
+                    
+                    spinner.appendChild(span);
+                    newOverlay.appendChild(spinner);
+                    document.body.appendChild(newOverlay);
+                    console.log('Created new loading overlay');
+                }
+
+                // Disable submit button to prevent double submission
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+
+                // Submit the form - wrapping in a promise for proper async execution
+                await new Promise((resolve) => {
+                    // Set a timeout to ensure loading indicator is displayed
+                    setTimeout(() => {
+                        form.submit();
+                        resolve();
+                    }, 100);
+                });
+            } catch (error) {
+                console.error('Form submission error:', error);
+                alert('An error occurred while submitting the form. Please try again.');
+                
+                // Hide loading overlay in case of error
+                const loadingOverlay = document.querySelector('.loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+                
+                // Re-enable submit button
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Create Event';
             }
-
-            // Show loading overlay
-            const loadingOverlay = document.getElementById('loading_overlay');
-            if (loadingOverlay) {
-                loadingOverlay.style.display = 'flex';
-            }
-
-            // Disable submit button to prevent double submission
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
-
-            // Submit the form
-            form.submit();
         });
     }
 });
