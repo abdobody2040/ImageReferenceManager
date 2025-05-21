@@ -738,18 +738,23 @@ def delete_user(user_id):
 @app.route('/api/dashboard/statistics')
 @login_required
 def dashboard_statistics():
-    # Get counts for dashboard
-    upcoming_events = Event.query.filter(Event.start_datetime > datetime.utcnow()).count()
-    online_events = Event.query.filter_by(is_online=True).count()
-    offline_events = Event.query.filter_by(is_online=False).count()
-    total_events = Event.query.count()
-    
-    return jsonify({
-        "upcoming_events": upcoming_events,
-        "online_events": online_events,
-        "offline_events": offline_events,
-        "total_events": total_events
-    })
+    try:
+        # Get counts for dashboard
+        upcoming_events = Event.query.filter(Event.start_datetime > datetime.utcnow()).count()
+        online_events = Event.query.filter_by(is_online=True).count()
+        offline_events = Event.query.filter_by(is_online=False).count()
+        total_events = Event.query.count()
+        pending_events = Event.query.filter_by(status='pending').count() if current_user.is_admin() else 0
+        
+        return jsonify({
+            "upcoming_events": upcoming_events,
+            "online_events": online_events,
+            "offline_events": offline_events,
+            "total_events": total_events,
+            "pending_events": pending_events
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/dashboard/categories')
 @login_required
