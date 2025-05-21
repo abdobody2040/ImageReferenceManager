@@ -746,15 +746,23 @@ def dashboard_statistics():
         total_events = Event.query.count()
         pending_events = Event.query.filter_by(status='pending').count() if current_user.is_admin() else 0
         
-        return jsonify({
-            "upcoming_events": upcoming_events,
-            "online_events": online_events,
-            "offline_events": offline_events,
-            "total_events": total_events,
-            "pending_events": pending_events
-        })
+        data = {
+            "upcoming_events": upcoming_events or 0,
+            "online_events": online_events or 0,
+            "offline_events": offline_events or 0,
+            "total_events": total_events or 0,
+            "pending_events": pending_events or 0
+        }
+        return jsonify(data)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Dashboard statistics error: {str(e)}")
+        return jsonify({
+            "upcoming_events": 0,
+            "online_events": 0,
+            "offline_events": 0,
+            "total_events": 0,
+            "pending_events": 0
+        }), 200  # Return empty stats instead of error
 
 @app.route('/api/dashboard/categories')
 @login_required
