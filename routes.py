@@ -739,24 +739,24 @@ def delete_user(user_id):
 @login_required
 def dashboard_statistics():
     try:
-        # Get counts for dashboard with explicit conversion to int
-        upcoming_events = int(Event.query.filter(Event.start_datetime > datetime.utcnow()).count())
-        online_events = int(Event.query.filter_by(is_online=True).count())
-        offline_events = int(Event.query.filter_by(is_online=False).count())
-        total_events = int(Event.query.count())
-        pending_events = int(Event.query.filter_by(status='pending').count()) if current_user.is_admin() else 0
-        
-        return jsonify({
-            "upcoming_events": upcoming_events,
-            "online_events": online_events,
-            "offline_events": offline_events,
-            "total_events": total_events,
-            "pending_events": pending_events
-        })
+        with app.app_context():
+            # Get counts for dashboard with explicit conversion to int
+            upcoming_events = int(Event.query.filter(Event.start_datetime > datetime.utcnow()).count())
+            online_events = int(Event.query.filter_by(is_online=True).count())
+            offline_events = int(Event.query.filter_by(is_online=False).count())
+            total_events = int(Event.query.count())
+            pending_events = int(Event.query.filter_by(status='pending').count()) if current_user.is_admin() else 0
+            
+            return jsonify({
+                "upcoming_events": upcoming_events,
+                "online_events": online_events,
+                "offline_events": offline_events,
+                "total_events": total_events,
+                "pending_events": pending_events
+            })
     except Exception as e:
         app.logger.error(f"Dashboard statistics error: {str(e)}")
         return jsonify({
-            "error": str(e),
             "upcoming_events": 0,
             "online_events": 0,
             "offline_events": 0,
