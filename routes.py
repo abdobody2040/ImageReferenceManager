@@ -601,8 +601,10 @@ def update_logo():
     if file.filename == '':
         return jsonify({'success': False, 'error': 'No selected file'})
         
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
+    if file and file.filename and allowed_file(file.filename):
+        # Ensure filename is not None before passing to secure_filename
+        original_filename = file.filename or "upload"
+        filename = secure_filename(original_filename)
         # Generate unique filename
         unique_filename = f"logo_{uuid.uuid4()}_{filename}"
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
@@ -610,7 +612,9 @@ def update_logo():
         # Update or create logo setting
         logo_setting = AppSetting.query.filter_by(key='app_logo').first()
         if not logo_setting:
-            logo_setting = AppSetting(key='app_logo', value=unique_filename)
+            logo_setting = AppSetting()
+            logo_setting.key = 'app_logo'
+            logo_setting.value = unique_filename
             db.session.add(logo_setting)
         else:
             # Remove old logo file if it exists
@@ -640,7 +644,8 @@ def add_category():
         return jsonify({"error": "Category already exists"}), 400
     
     # Create new category
-    category = EventCategory(name=name)
+    category = EventCategory()
+    category.name = name
     db.session.add(category)
     db.session.commit()
     
@@ -680,7 +685,8 @@ def add_event_type():
         return jsonify({"error": "Event type already exists"}), 400
     
     # Create new event type
-    event_type = EventType(name=name)
+    event_type = EventType()
+    event_type.name = name
     db.session.add(event_type)
     db.session.commit()
     
@@ -723,7 +729,9 @@ def add_user():
         return jsonify({"error": "User with this email already exists"}), 400
     
     # Create new user
-    user = User(email=email, role=role)
+    user = User()
+    user.email = email
+    user.role = role
     user.set_password(password)
     
     db.session.add(user)
@@ -877,15 +885,21 @@ def migrate_db():
     db.create_all()
     
     # Create admin user
-    admin = User(email='admin@pharmaevents.com', role='admin')
+    admin = User()
+    admin.email = 'admin@pharmaevents.com'
+    admin.role = 'admin'
     admin.set_password('admin123')
     
     # Create event manager user
-    event_manager = User(email='manager@pharmaevents.com', role='event_manager')
+    event_manager = User()
+    event_manager.email = 'manager@pharmaevents.com'
+    event_manager.role = 'event_manager'
     event_manager.set_password('manager123')
     
     # Create medical rep user
-    medical_rep = User(email='rep@pharmaevents.com', role='medical_rep')
+    medical_rep = User()
+    medical_rep.email = 'rep@pharmaevents.com'
+    medical_rep.role = 'medical_rep'
     medical_rep.set_password('rep123')
     
     # Add users to session
