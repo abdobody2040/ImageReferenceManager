@@ -262,12 +262,23 @@ def create_event():
             date_pattern = r'^\d{4}-\d{2}-\d{2}$'
             time_pattern = r'^\d{2}:\d{2}$'
             
-            if not (start_date and re.match(date_pattern, start_date) and 
-                   start_time and re.match(time_pattern, start_time) and
-                   end_date and re.match(date_pattern, end_date) and
-                   end_time and re.match(time_pattern, end_time) and
-                   deadline_date and re.match(date_pattern, deadline_date) and
-                   deadline_time and re.match(time_pattern, deadline_time)):
+            # Validate that all required fields are strings and match patterns
+            date_time_fields = [
+                (start_date, date_pattern, "start date"),
+                (start_time, time_pattern, "start time"),
+                (end_date, date_pattern, "end date"),
+                (end_time, time_pattern, "end time"),
+                (deadline_date, date_pattern, "deadline date"),
+                (deadline_time, time_pattern, "deadline time")
+            ]
+            
+            for field_value, pattern, field_name in date_time_fields:
+                if not field_value or not isinstance(field_value, str) or not re.match(pattern, field_value):
+                    flash(f'Invalid {field_name} format. Please use the date/time selectors.', 'danger')
+                    return redirect(url_for('create_event'))
+            
+            # All validations passed, continue with processing
+            if False:  # This condition will never be true, but maintains the original structure
                 flash('Invalid date or time format. Please use the date/time selectors.', 'danger')
                 return redirect(url_for('create_event'))
                 
@@ -297,22 +308,21 @@ def create_event():
             status = 'approved'  # Admins' events are auto-approved
             
         # Create new event
-        event = Event(
-            name=name,
-            requester_name=requester_name,
-            is_online=is_online,
-            start_datetime=start_datetime,
-            end_datetime=end_datetime,
-            registration_deadline=registration_deadline,
-            governorate=governorate if not is_online else None,
-            venue_id=venue_id if venue_id and not is_online else None,
-            service_request_id=service_request_id,
-            employee_code_id=employee_code_id,
-            event_type_id=event_type_id,
-            description=description,
-            user_id=current_user.id,
-            status=status
-        )
+        event = Event()
+        event.name = name
+        event.requester_name = requester_name
+        event.is_online = is_online
+        event.start_datetime = start_datetime
+        event.end_datetime = end_datetime
+        event.registration_deadline = registration_deadline
+        event.governorate = governorate if not is_online else None
+        event.venue_id = venue_id if venue_id and not is_online else None
+        event.service_request_id = service_request_id
+        event.employee_code_id = employee_code_id
+        event.event_type_id = event_type_id
+        event.description = description
+        event.user_id = current_user.id
+        event.status = status
         
         # Add categories
         for category_id in category_ids:
@@ -410,7 +420,8 @@ def edit_event(event_id):
         if service_request_text:
             service_request = ServiceRequest.query.filter_by(name=service_request_text).first()
             if not service_request:
-                service_request = ServiceRequest(name=service_request_text)
+                service_request = ServiceRequest()
+                service_request.name = service_request_text
                 db.session.add(service_request)
                 db.session.flush()
             event.service_request_id = service_request.id
@@ -421,13 +432,18 @@ def edit_event(event_id):
         if employee_code_text:
             employee_code = EmployeeCode.query.filter_by(code=employee_code_text).first()
             if not employee_code:
-                employee_code = EmployeeCode(code=employee_code_text, name=employee_code_text)
+                employee_code = EmployeeCode()
+                employee_code.code = employee_code_text
+                employee_code.name = employee_code_text
                 db.session.add(employee_code)
                 db.session.flush()
             event.employee_code_id = employee_code.id
         else:
             event.employee_code_id = None
-        event.event_type_id = int(event_type_id)
+        if event_type_id and event_type_id.isdigit():
+            event.event_type_id = int(event_type_id)
+        else:
+            event.event_type_id = None
         event.description = request.form.get('description')
         
         # Check if status change was requested (only admins can change status)
