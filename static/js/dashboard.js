@@ -32,15 +32,33 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load dashboard statistics
 function loadDashboardStats() {
     fetch('/api/dashboard/statistics')
-        .then(response => response.json())
-        .then(data => {
-            // Update stat cards
-            document.getElementById('upcoming_events_count').textContent = data.upcoming_events;
-            document.getElementById('online_events_count').textContent = data.online_events;
-            document.getElementById('offline_events_count').textContent = data.offline_events;
-            document.getElementById('total_events_count').textContent = data.total_events;
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
         })
-        .catch(error => console.error('Error loading dashboard statistics:', error));
+        .then(data => {
+            // Update stat cards safely
+            const upcomingElement = document.getElementById('upcoming_events_count');
+            const onlineElement = document.getElementById('online_events_count');
+            const offlineElement = document.getElementById('offline_events_count');
+            const totalElement = document.getElementById('total_events_count');
+            
+            if (upcomingElement) upcomingElement.textContent = data.upcoming_events || 0;
+            if (onlineElement) onlineElement.textContent = data.online_events || 0;
+            if (offlineElement) offlineElement.textContent = data.offline_events || 0;
+            if (totalElement) totalElement.textContent = data.total_events || 0;
+        })
+        .catch(error => {
+            console.error('Error loading dashboard statistics:', error);
+            // Set default values on error
+            const elements = ['upcoming_events_count', 'online_events_count', 'offline_events_count', 'total_events_count'];
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = '0';
+            });
+        });
 }
 
 // Initialize Category Chart

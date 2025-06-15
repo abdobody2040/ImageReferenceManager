@@ -262,12 +262,12 @@ def create_event():
             date_pattern = r'^\d{4}-\d{2}-\d{2}$'
             time_pattern = r'^\d{2}:\d{2}$'
             
-            if not (re.match(date_pattern, start_date) and 
-                   re.match(time_pattern, start_time) and
-                   re.match(date_pattern, end_date) and
-                   re.match(time_pattern, end_time) and
-                   re.match(date_pattern, deadline_date) and
-                   re.match(time_pattern, deadline_time)):
+            if not (start_date and re.match(date_pattern, start_date) and 
+                   start_time and re.match(time_pattern, start_time) and
+                   end_date and re.match(date_pattern, end_date) and
+                   end_time and re.match(time_pattern, end_time) and
+                   deadline_date and re.match(date_pattern, deadline_date) and
+                   deadline_time and re.match(time_pattern, deadline_time)):
                 flash('Invalid date or time format. Please use the date/time selectors.', 'danger')
                 return redirect(url_for('create_event'))
                 
@@ -545,20 +545,27 @@ def settings():
 def update_settings():
     data = request.json
     
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
     # Handle theme toggle
     if 'theme' in data and data['theme'] in ['light', 'dark']:
         theme_setting = AppSetting.query.filter_by(key='theme').first()
         if not theme_setting:
-            theme_setting = AppSetting(key='theme', value='light')
+            theme_setting = AppSetting()
+            theme_setting.key = 'theme'
+            theme_setting.value = 'light'
             db.session.add(theme_setting)
         theme_setting.value = data['theme']
         db.session.commit()  # Commit the change immediately
     
     # Handle app name change
-    if 'name' in data and data['name'].strip():
+    if 'name' in data and data['name'] and data['name'].strip():
         name_setting = AppSetting.query.filter_by(key='app_name').first()
         if not name_setting:
-            name_setting = AppSetting(key='app_name', value='PharmaEvents')
+            name_setting = AppSetting()
+            name_setting.key = 'app_name'
+            name_setting.value = 'PharmaEvents'
             db.session.add(name_setting)
         name_setting.value = data['name'].strip()
         db.session.commit()  # Commit the change immediately
@@ -739,21 +746,20 @@ def delete_user(user_id):
 @login_required
 def dashboard_statistics():
     try:
-        with app.app_context():
-            # Get counts for dashboard with explicit conversion to int
-            upcoming_events = int(Event.query.filter(Event.start_datetime > datetime.utcnow()).count())
-            online_events = int(Event.query.filter_by(is_online=True).count())
-            offline_events = int(Event.query.filter_by(is_online=False).count())
-            total_events = int(Event.query.count())
-            pending_events = int(Event.query.filter_by(status='pending').count()) if current_user.is_admin() else 0
-            
-            return jsonify({
-                "upcoming_events": upcoming_events,
-                "online_events": online_events,
-                "offline_events": offline_events,
-                "total_events": total_events,
-                "pending_events": pending_events
-            })
+        # Get counts for dashboard
+        upcoming_events = Event.query.filter(Event.start_datetime > datetime.utcnow()).count()
+        online_events = Event.query.filter_by(is_online=True).count()
+        offline_events = Event.query.filter_by(is_online=False).count()
+        total_events = Event.query.count()
+        pending_events = Event.query.filter_by(status='pending').count() if current_user.is_admin() else 0
+        
+        return jsonify({
+            "upcoming_events": upcoming_events,
+            "online_events": online_events,
+            "offline_events": offline_events,
+            "total_events": total_events,
+            "pending_events": pending_events
+        })
     except Exception as e:
         app.logger.error(f"Dashboard statistics error: {str(e)}")
         return jsonify({
@@ -762,7 +768,7 @@ def dashboard_statistics():
             "offline_events": 0,
             "total_events": 0,
             "pending_events": 0
-        }), 200
+        }), 500
 
 @app.route('/api/dashboard/categories')
 @login_required
