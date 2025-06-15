@@ -926,7 +926,8 @@ def migrate_db():
     ]
     
     for type_name in event_types:
-        event_type = EventType(name=type_name)
+        event_type = EventType()
+        event_type.name = type_name
         db.session.add(event_type)
     
     # Create venues
@@ -939,13 +940,16 @@ def migrate_db():
     ]
     
     for venue_data in venues:
-        venue = Venue(name=venue_data['name'], governorate=venue_data['governorate'])
+        venue = Venue()
+        venue.name = venue_data['name']
+        venue.governorate = venue_data['governorate']
         db.session.add(venue)
     
     # Create service requests
     service_requests = ['Clinical Trial Support', 'Product Education', 'Physician Training']
     for sr_name in service_requests:
-        sr = ServiceRequest(name=sr_name)
+        sr = ServiceRequest()
+        sr.name = sr_name
         db.session.add(sr)
     
     # Create employee codes
@@ -956,7 +960,9 @@ def migrate_db():
     ]
     
     for ec_data in employee_codes:
-        ec = EmployeeCode(code=ec_data['code'], name=ec_data['name'])
+        ec = EmployeeCode()
+        ec.code = ec_data['code']
+        ec.name = ec_data['name']
         db.session.add(ec)
     
     # Commit changes
@@ -984,11 +990,15 @@ def init_db():
         return "Database already initialized"
     
     # Create admin user
-    admin = User(email='admin@pharmaevents.com', role='admin')
+    admin = User()
+    admin.email = 'admin@pharmaevents.com'
+    admin.role = 'admin'
     admin.set_password('admin123')
     
     # Create event manager user
-    event_manager = User(email='manager@pharmaevents.com', role='event_manager')
+    event_manager = User()
+    event_manager.email = 'manager@pharmaevents.com'
+    event_manager.role = 'event_manager'
     event_manager.set_password('manager123')
     
     # Add users to session
@@ -1003,7 +1013,8 @@ def init_db():
     ]
     
     for cat_name in categories:
-        category = EventCategory(name=cat_name)
+        category = EventCategory()
+        category.name = cat_name
         db.session.add(category)
     
     # Create event types
