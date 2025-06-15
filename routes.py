@@ -915,7 +915,8 @@ def migrate_db():
     ]
     
     for cat_name in categories:
-        category = EventCategory(name=cat_name)
+        category = EventCategory()
+        category.name = cat_name
         db.session.add(category)
     
     # Create event types
