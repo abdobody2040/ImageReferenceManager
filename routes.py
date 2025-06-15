@@ -627,6 +627,8 @@ def update_logo():
         
         db.session.commit()
         return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'error': 'Invalid file type'})
 
 @app.route('/api/categories', methods=['POST'])
 @login_required
@@ -1024,7 +1026,8 @@ def init_db():
     ]
     
     for type_name in event_types:
-        event_type = EventType(name=type_name)
+        event_type = EventType()
+        event_type.name = type_name
         db.session.add(event_type)
     
     # Create venues
@@ -1037,13 +1040,16 @@ def init_db():
     ]
     
     for venue_data in venues:
-        venue = Venue(name=venue_data['name'], governorate=venue_data['governorate'])
+        venue = Venue()
+        venue.name = venue_data['name']
+        venue.governorate = venue_data['governorate']
         db.session.add(venue)
     
     # Create service requests
     service_requests = ['Clinical Trial Support', 'Product Education', 'Physician Training']
     for sr_name in service_requests:
-        sr = ServiceRequest(name=sr_name)
+        sr = ServiceRequest()
+        sr.name = sr_name
         db.session.add(sr)
     
     # Create employee codes
@@ -1054,7 +1060,9 @@ def init_db():
     ]
     
     for ec_data in employee_codes:
-        ec = EmployeeCode(code=ec_data['code'], name=ec_data['name'])
+        ec = EmployeeCode()
+        ec.code = ec_data['code']
+        ec.name = ec_data['name']
         db.session.add(ec)
     
     # Commit changes
