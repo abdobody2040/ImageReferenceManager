@@ -94,7 +94,7 @@ PharmaEvents is a web-based event management application designed specifically f
 
 ### Hosting Configuration
 - **Modules**: python-3.11, postgresql-16
-- **Port Mapping**: Internal 5000 → External 80
+- **Port Mapping**: Internal 4000 → External 80
 - **Process Management**: Parallel workflow execution
 - **File Storage**: Static file serving for uploads
 

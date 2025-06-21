@@ -27,7 +27,7 @@ RUN mkdir -p /app/static/uploads && \
     chmod -R 755 /app/static/uploads
 
 # Expose port
-EXPOSE 5000
+EXPOSE 4000
 
 # Run application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:4000", "app:app"]
