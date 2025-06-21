@@ -888,21 +888,21 @@ def migrate_db():
     
     # Create admin user
     admin = User()
-    admin.email = 'admin@pharmaevents.com'
-    admin.role = 'admin'
-    admin.set_password('admin123')
+    admin.email = os.environ.get('ADMIN_EMAIL')
+    admin.role = os.environ.get('ADMIN_ROLE')
+    admin.set_password(os.environ.get('ADMIN_PASSWORD'))
     
     # Create event manager user
     event_manager = User()
-    event_manager.email = 'manager@pharmaevents.com'
-    event_manager.role = 'event_manager'
-    event_manager.set_password('manager123')
+    event_manager.email = os.environ.get('EVENT_MANAGER_EMAIL')
+    event_manager.role = os.environ.get('EVENT_MANAGER_ROLE')
+    event_manager.set_password(os.environ.get('EVENT_MANAGER_PASSWORD'))
     
     # Create medical rep user
     medical_rep = User()
-    medical_rep.email = 'rep@pharmaevents.com'
-    medical_rep.role = 'medical_rep'
-    medical_rep.set_password('rep123')
+    medical_rep.email = os.environ.get('MEDICAL_REP_EMAIL')
+    medical_rep.role = os.environ.get('MEDICAL_REP_ROLE')
+    medical_rep.set_password(os.environ.get('MEDICAL_REP_PASSWORD'))
     
     # Add users to session
     db.session.add(admin)
@@ -993,9 +993,9 @@ def init_db():
     
     # Create admin user
     admin = User()
-    admin.email = 'admin@pharmaevents.com'
-    admin.role = 'admin'
-    admin.set_password('admin123')
+    admin.email = os.environ.get('ADMIN_EMAIL')
+    admin.role = os.environ.get('ADMIN_ROLE')
+    admin.set_password(os.environ.get('ADMIN_PASSWORD'))
     
     # Create event manager user
     event_manager = User()
