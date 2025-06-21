@@ -18,7 +18,7 @@ class ProductionConfig:
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/app/static/uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB upload limit
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 class Base(DeclarativeBase):
     pass
